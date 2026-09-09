@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IDK Video Editor - Speed & Volume</title>
+    <title>IDK Video Editor - Fixed Resize & Timeline</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -53,7 +53,7 @@
             --accent: #56d364;
         }
 
-        * { box-sizing: border-box; touch-action: manipulation; }
+        * { box-sizing: border-box; }
         body {
             margin: 0; padding: 4px;
             font-family: 'MS Sans Serif', monospace;
@@ -181,10 +181,12 @@
             border: 1.5px solid white; display: flex; align-items: center; justify-content: space-between;
             padding: 0 8px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
             overflow: hidden; z-index: 10; cursor: pointer; border-radius: 2px;
+            touch-action: none; /* 스크롤 방지 및 조작 최적화 */
         }
         .timeline-clip.selected { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); background-color: #3b0066; }
         .clip-handle {
-            width: 12px; height: 100%; background: rgba(255,255,255,0.8); position: absolute; cursor: ew-resize; top: 0; z-index: 12;
+            width: 14px; height: 100%; background: rgba(255,255,255,0.9); position: absolute; cursor: ew-resize; top: 0; z-index: 12;
+            touch-action: none;
         }
         .clip-handle.left { left: 0; }
         .clip-handle.right { right: 0; }
@@ -203,7 +205,7 @@
             </select>
             <button onclick="saveProject()">저장</button>
         </div>
-        <div style="font-size: 10px;">Touch Pro v2.5</div>
+        <div style="font-size: 10px;">Touch Pro v2.6</div>
     </div>
 
     <div class="main-workspace" id="workspace">
@@ -482,21 +484,22 @@
                 const leftHandle = document.createElement('div');
                 leftHandle.className = 'clip-handle left';
                 leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left', zoomFactor);
-                leftHandle.onttouchstart = (e) => initResizeClip(e, clip, 'left', zoomFactor);
+                leftHandle.ontatart = (e) => {}; // placeholder
+                leftHandle.addEventListener('touchstart', (e) => initResizeClip(e, clip, 'left', zoomFactor), {passive: false});
 
                 const rightHandle = document.createElement('div');
                 rightHandle.className = 'clip-handle right';
                 rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right', zoomFactor);
-                rightHandle.onttouchstart = (e) => initResizeClip(e, clip, 'right', zoomFactor);
+                rightHandle.addEventListener('touchstart', (e) => initResizeClip(e, clip, 'right', zoomFactor), {passive: false});
 
                 clipEl.onmousedown = (e) => {
                     if (e.target.classList.contains('clip-handle')) return;
                     initMoveClipX(e, clip, zoomFactor);
                 };
-                clipEl.onttouchstart = (e) => {
+                clipEl.addEventListener('touchstart', (e) => {
                     if (e.target.classList.contains('clip-handle')) return;
                     initMoveClipX(e, clip, zoomFactor);
-                };
+                }, {passive: false});
 
                 clipEl.appendChild(leftHandle);
                 clipEl.appendChild(rightHandle);
@@ -517,7 +520,6 @@
             document.getElementById('valVolume').innerText = clip.volume !== undefined ? clip.volume : 100;
             document.getElementById('animSelect').value = clip.anim || 'none';
 
-            // 텍스트 클립일 경우 속도/볼륨 설정창 숨기기 등 처리 가능
             const speedGroup = document.getElementById('speedGroup');
             const volumeGroup = document.getElementById('volumeGroup');
             if (clip.type === 'text') {
@@ -531,11 +533,13 @@
 
         function initResizeClip(e, clip, direction, zoomFactor) {
             e.stopPropagation();
+            if (e.cancelable) e.preventDefault();
             const clientX = e.clientX || (e.touches && e.touches[0].clientX);
             const initialStart = clip.start;
             const initialDuration = clip.duration;
 
             function onMove(moveEvent) {
+                if (moveEvent.cancelable) moveEvent.preventDefault();
                 const currentX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
                 const deltaX = currentX - clientX;
                 const deltaTime = deltaX / zoomFactor;
@@ -564,11 +568,13 @@
 
             window.addEventListener('mousemove', onMove);
             window.addEventListener('mouseup', onEnd);
-            window.addEventListener('touchmove', onMove);
+            window.addEventListener('touchmove', onMove, {passive: false});
             window.addEventListener('touchend', onEnd);
         }
 
         function initMoveClipX(e, clip, zoomFactor) {
+            e.stopPropagation();
+            if (e.cancelable) e.preventDefault();
             if (!selectedClipIds.includes(clip.id)) {
                 selectedClipIds = [clip.id];
                 loadClipProperties(clip);
@@ -578,6 +584,7 @@
             const initialStart = clip.start;
 
             function onMove(moveEvent) {
+                if (moveEvent.cancelable) moveEvent.preventDefault();
                 const currentX = moveEvent.clientX || (moveEvent.touches && moveEvent.touches[0].clientX);
                 const deltaX = currentX - clientX;
                 const deltaTime = deltaX / zoomFactor;
@@ -597,7 +604,7 @@
 
             window.addEventListener('mousemove', onMove);
             window.addEventListener('mouseup', onEnd);
-            window.addEventListener('touchmove', onMove);
+            window.addEventListener('touchmove', onMove, {passive: false});
             window.addEventListener('touchend', onEnd);
         }
 
@@ -805,3 +812,4 @@
     </script>
 </body>
 </html>
+

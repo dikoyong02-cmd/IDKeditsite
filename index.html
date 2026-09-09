@@ -3,134 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>간편 동영상 편집기</title>
+    <title>IDK Video Editor - Y2K Style</title>
     <style>
+        :root {
+            --bg-color: #fce4ec;
+            --panel-bg: #fff0f5;
+            --text-color: #4a1525;
+            --border-color: #ffb6c1;
+            --accent-color: #d81b60;
+            --button-bg: #f8bbd0;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0b0610;
+            --panel-bg: #181022;
+            --text-color: #f3e5f5;
+            --border-color: #4a148c;
+            --accent-color: #ab47bc;
+            --button-bg: #2d1b4e;
+        }
+
+        * { box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.3s, color 0.3s;
         }
-        .container {
-            max-width: 500px;
-            margin: 0 auto 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+        .top-bar {
+            height: 55px;
+            background-color: var(--panel-bg);
+            border-bottom: 2px dashed var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
         }
-        input, button {
-            margin-top: 15px;
-            padding: 10px;
-            font-size: 16px;
+        .logo {
+            font-weight: bold;
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: var(--accent-color);
         }
-        /* 애니메이션 대상 박스 */
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 280px;
+            grid-template-rows: 1fr 140px;
+            height: calc(100vh - 55px);
+            gap: 4px;
+            background-color: var(--border-color);
+            padding: 4px;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .media-panel {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .preview-panel {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            position: relative;
+        }
         #targetBox {
-            width: 100px;
-            height: 100px;
-            background-color: #ff6b6b;
-            margin: 20px auto;
+            width: 130px;
+            height: 130px;
+            background: linear-gradient(135deg, var(--accent-color), var(--border-color));
             border-radius: 12px;
-            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #fff;
         }
-        .action-btn {
-            background-color: #339af0;
-            color: white;
-            border: none;
+
+        .inspector-panel {
+            grid-column: 3;
+            grid-row: 1 / span 2;
+        }
+
+        .timeline-panel {
+            grid-column: 1 / span 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button, input[type="file"], .theme-toggle {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
+            margin-top: 10px;
+            font-size: 13px;
+            font-family: inherit;
         }
-        .save-btn {
-            background-color: #51cf66;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        button:hover { background-color: var(--accent-color); color: #fff; }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
-    <!-- 1번 영역: 동영상 파일 선택 -->
-    <div class="container">
-        <h2>동영상 편집 업로드</h2>
-        <p>편집할 동영상을 선택해 주세요 (구형 폰 배려 가벼운 모드)</p>
-        
-        <input type="file" id="videoFile" accept="video/*">
-        <br>
-        <p id="status" style="margin-top: 15px; color: blue; font-size: 14px;"></p>
+    <div class="top-bar">
+        <span class="logo">IDK-EDITSITE</span>
+        <div>
+            <button class="theme-toggle" onclick="toggleTheme()">테마 전환</button>
+            <button onclick="saveProjectToDevice()" style="background-color: var(--accent-color); color: white;">프로젝트 저장</button>
+        </div>
     </div>
 
-    <!-- 2번 영역: 키프레임 애니메이션 테스트 -->
-    <div class="container">
-        <h2>키프레임 애니메이션</h2>
-        <p>요소가 움직이는 효과를 미리 확인하세요.</p>
+    <div class="editor-container">
 
-        <div id="targetBox"></div>
+        <div class="panel media-panel">
+            <h3>Media Source</h3>
+            <p style="font-size: 11px; opacity: 0.7;">비디오 파일 업로드</p>
+            <input type="file" id="videoFile" accept="video/*" style="width: 100%;">
+            <p id="status" style="font-size: 11px; color: var(--accent-color); margin-top: 10px;"></p>
+        </div>
 
-        <button class="action-btn" onclick="playAnimation()">애니메이션 재생</button>
-    </div>
+        <div class="preview-panel">
+            <div id="targetBox">PREVIEW</div>
+            <p id="timeIndicator" style="font-size: 11px; opacity: 0.6; margin-top: 15px;">00:00 / 00:10 (Keyframe Track)</p>
+        </div>
 
-    <!-- 3번 영역: 기기 파일 저장 (다운로드) -->
-    <div class="container">
-        <h2>프로젝트 파일 저장</h2>
-        <p>현재 편집 설정을 내 기기에 파일로 저장합니다.</p>
-        <button class="save-btn" onclick="saveProjectToDevice()">기기에 파일 저장하기</button>
+        <div class="panel inspector-panel">
+            <h3>Keyframe Properties</h3>
+            
+            <div class="control-group">
+                <label>X Position</label>
+                <input type="range" id="rangeX" min="-120" max="120" value="0" oninput="updateAnimation()">
+            </div>
+
+            <div class="control-group">
+                <label>Scale</label>
+                <input type="range" id="rangeScale" min="0.5" max="1.8" step="0.1" value="1" oninput="updateAnimation()">
+            </div>
+
+            <div class="control-group">
+                <label>Opacity</label>
+                <input type="range" id="rangeOpacity" min="0.2" max="1" step="0.1" value="1" oninput="updateAnimation()">
+            </div>
+
+            <button onclick="playAutoAnimation()" style="width: 100%;">애니메이션 재생 테스트</button>
+        </div>
+
+        <div class="panel timeline-panel">
+            <p style="font-size: 11px; margin: 0 0 8px 0; opacity: 0.8;">Timeline Track</p>
+            <div style="width: 95%; height: 35px; background-color: var(--bg-color); border-radius: 4px; display: flex; align-items: center; padding: 0 10px; border: 1px dashed var(--border-color);">
+                <div style="background-color: var(--accent-color); height: 20px; width: 50%; border-radius: 3px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; color: white;">Video Clip #1</div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // [기능 1] 파일 선택 감지
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute("data-theme");
+            if (currentTheme === "dark") {
+                body.setAttribute("data-theme", "light");
+            } else {
+                body.setAttribute("data-theme", "dark");
+            }
+        }
+
         const fileInput = document.getElementById('videoFile');
         const status = document.getElementById('status');
 
         fileInput.addEventListener('change', function() {
             if (fileInput.files.length > 0) {
-                status.innerText = `선택된 파일: ${fileInput.files[0].name}`;
+                status.innerText = `Loaded: ${fileInput.files[0].name}`;
             }
         });
 
-        // [기능 2] 키프레임 애니메이션 실행
-        const keyframes = {
-            start: { x: 0, scale: 1, opacity: 1 },
-            end: { x: 130, scale: 1.3, opacity: 0.7 }
-        };
-
-        function playAnimation() {
+        function updateAnimation() {
+            const x = document.getElementById('rangeX').value;
+            const scale = document.getElementById('rangeScale').value;
+            const opacity = document.getElementById('rangeOpacity').value;
             const box = document.getElementById('targetBox');
 
-            // 초기 위치 설정
-            box.style.transform = `translateX(0px) scale(${keyframes.start.scale})`;
-            box.style.opacity = keyframes.start.opacity;
-
-            // 딜레이 후 목표 위치로 변형 (애니메이션 효과)
-            setTimeout(() => {
-                box.style.transform = `translateX(${keyframes.end.x}px) scale(${keyframes.end.scale})`;
-                box.style.opacity = keyframes.end.opacity;
-            }, 50);
+            box.style.transform = `translateX(${x}px) scale(${scale})`;
+            box.style.opacity = opacity;
         }
 
-        // [기능 3] 기기 저장 (다운로드 API)
+        function playAutoAnimation() {
+            const box = document.getElementById('targetBox');
+            
+            box.style.transform = `translateX(90px) scale(1.3)`;
+            box.style.opacity = 0.6;
+            document.getElementById('rangeX').value = 90;
+            document.getElementById('rangeScale').value = 1.3;
+            document.getElementById('rangeOpacity').value = 0.6;
+
+            setTimeout(() => {
+                box.style.transform = `translateX(0px) scale(1)`;
+                box.style.opacity = 1;
+                document.getElementById('rangeX').value = 0;
+                document.getElementById('rangeScale').value = 1;
+                document.getElementById('rangeOpacity').value = 1;
+            }, 800);
+        }
+
         function saveProjectToDevice() {
-            // 저장할 데이터 (나중에 편집 설정값을 JSON 형태로 저장 가능)
             const projectData = {
-                version: "1.0",
-                animation: keyframes,
+                site: "IDK Editsite",
+                theme: document.body.getAttribute("data-theme"),
+                settings: {
+                    x: document.getElementById('rangeX').value,
+                    scale: document.getElementById('rangeScale').value,
+                    opacity: document.getElementById('rangeOpacity').value
+                },
                 savedAt: new Date().toISOString()
             };
 
             const dataString = JSON.stringify(projectData, null, 2);
-            
-            // 가상의 Blob 파일 생성 후 다운로드 링크 연결
             const blob = new Blob([dataString], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'video-edit-project.json'; // 기기에 저장될 파일 이름
+            a.download = 'idk-project-save.json';
             
             document.body.appendChild(a);
             a.click();
-            
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }

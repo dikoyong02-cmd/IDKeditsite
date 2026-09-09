@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDK Video Editor - Real Video & Keyframe Editor</title>
+    <title>IDK Video Editor - Multi Track Timeline</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -351,15 +351,37 @@
             white-space: nowrap;
         }
 
-        .timeline-track-area {
-            position: relative;
-            width: 100%;
+        /* 멀티 트랙 영역 스타일 */
+        .timeline-tracks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
             flex: 1 1 auto;
             min-height: 160px;
             background-color: var(--win-darker);
             border: 1px solid var(--win-light);
+            overflow-y: auto;
+            position: relative;
+        }
+        .timeline-track {
+            position: relative;
+            width: 100%;
+            height: 45px;
+            background-color: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--win-dark);
             cursor: pointer;
         }
+        .timeline-track::before {
+            content: attr(data-track-name);
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            font-size: 9px;
+            color: #aaa;
+            z-index: 5;
+            pointer-events: none;
+        }
+
         .keyframe-marker {
             position: absolute;
             top: 2px;
@@ -371,13 +393,6 @@
             cursor: grab;
             z-index: 3;
         }
-        .keyframe-marker::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 3px;
-            width: 2px; height: 100%;
-            background: white;
-        }
         #playheadLine {
             position: absolute;
             top: 0;
@@ -385,27 +400,27 @@
             width: 2px;
             height: 100%;
             background: red;
-            z-index: 4;
+            z-index: 10;
             pointer-events: none;
         }
-        /* 타임라인 클립 스타일 수정 (눈에 확 띄도록 높이와 두께 조정) */
         .timeline-clip {
             position: absolute;
-            top: 10px;
-            bottom: 10px;
+            top: 14px;
+            height: 28px;
             background-color: var(--win-blue);
-            border: 2px solid #ffffff;
+            border: 1.5px solid white;
             opacity: 0.9;
             display: flex;
             align-items: center;
             padding-left: 8px;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: bold;
             color: white;
             white-space: nowrap;
             overflow: hidden;
             z-index: 2;
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -424,7 +439,7 @@
             <button onclick="resetLayout()">창 크기/위치 초기화</button>
             <button onclick="saveProjectToDevice()">프로젝트 저장</button>
         </div>
-        <div style="font-size: 10px;">Full Editor v2.10</div>
+        <div style="font-size: 10px;">Full Editor v2.11</div>
     </div>
 
     <div class="main-workspace" id="workspace">
@@ -499,17 +514,17 @@
 
         <div class="window panel-timeline">
             <div class="title-bar">
-                <span>Timeline & Keyframe Track</span>
+                <span>Timeline & Multi-Tracks</span>
                 <div class="title-bar-controls"><button onclick="toggleCollapse(this)">-</button></div>
             </div>
             <div class="sunken-panel">
                 <div class="timeline-header">
-                    <span>타임라인 영역에 영상 클립이 선명하게 표시됩니다.</span>
+                    <span>영상을 업로드하면 각기 다른 트랙(Track 1, Track 2...)에 차곡차곡 배치됩니다.</span>
                 </div>
                 <div class="timeline-ruler" id="timelineRuler"></div>
-                <div class="timeline-track-area" id="timelineTrack" onclick="seekTimeline(event)">
-                    <div id="timelineClipsContainer"></div>
+                <div class="timeline-tracks-container" id="timelineTracksContainer" onclick="seekTimeline(event)">
                     <div id="playheadLine"></div>
+                    <!-- 트랙들이 동적으로 생성됩니다 -->
                 </div>
             </div>
         </div>
@@ -572,7 +587,7 @@
 
         function resetLayout() {
             workspace.style.setProperty('--col-1', '240px');
-            workspace.style.setProperty('--col-3', '260px');
+            workspace.style.setProperty('--col-2', '260px');
             workspace.style.setProperty('--row-2', '300px');
             document.querySelectorAll('.window.collapsed').forEach(w => w.classList.remove('collapsed'));
         }
@@ -585,7 +600,7 @@
         const timeDisplay = document.getElementById('timeDisplay');
         const playheadLine = document.getElementById('playheadLine');
         const fileListBox = document.getElementById('fileListBox');
-        const timelineClipsContainer = document.getElementById('timelineClipsContainer');
+        const timelineTracksContainer = document.getElementById('timelineTracksContainer');
 
         let isVideoLoaded = false;
         let keyframes = {};
@@ -598,6 +613,7 @@
                 uploadedFiles.push(file);
                 selectedFileIndex = uploadedFiles.length - 1;
                 renderFileList();
+                renderAllTracks();
                 loadSelectedFile(selectedFileIndex);
             }
         });
@@ -633,19 +649,31 @@
 
             videoElement.onloadedmetadata = function () {
                 updateTimeDisplay();
-                renderTimelineClip(file.name, videoElement.duration);
                 renderRuler();
             };
         }
 
-        function renderTimelineClip(name, duration) {
-            timelineClipsContainer.innerHTML = '';
-            const clip = document.createElement('div');
-            clip.className = 'timeline-clip';
-            clip.style.left = '0%';
-            clip.style.width = '100%';
-            clip.innerText = `🎬 ${name} (${formatTime(duration)})`;
-            timelineClipsContainer.appendChild(clip);
+        function renderAllTracks() {
+            // 기존 트랙들과 플레이헤드 보존을 위해 플레이헤드를 빼고 초기화
+            timelineTracksContainer.innerHTML = '';
+            timelineTracksContainer.appendChild(playheadLine);
+
+            if (uploadedFiles.length === 0) return;
+
+            uploadedFiles.forEach((file, idx) => {
+                const track = document.createElement('div');
+                track.className = 'timeline-track';
+                track.setAttribute('data-track-name', `Track ${idx + 1}`);
+
+                const clip = document.createElement('div');
+                clip.className = 'timeline-clip';
+                clip.style.left = '0%';
+                clip.style.width = '100%'; // 추후 구간 조절 가능하도록 전체 너비 부여
+                clip.innerText = `🎬 ${file.name}`;
+
+                track.appendChild(clip);
+                timelineTracksContainer.appendChild(track);
+            });
         }
 
         function deleteSelectedFile() {
@@ -659,6 +687,7 @@
             if (uploadedFiles.length > 0) {
                 selectedFileIndex = 0;
                 renderFileList();
+                renderAllTracks();
                 loadSelectedFile(selectedFileIndex);
             } else {
                 videoElement.pause();
@@ -670,9 +699,8 @@
                 status.innerText = '';
                 isVideoLoaded = false;
                 selectedFileIndex = null;
-                timelineClipsContainer.innerHTML = '';
+                renderAllTracks();
                 keyframes = {};
-                document.querySelectorAll('.keyframe-marker').forEach(m => m.remove());
                 renderFileList();
                 updateTimeDisplay();
                 renderRuler();
@@ -732,8 +760,8 @@
         }
 
         function seekTimeline(event) {
-            const track = document.getElementById('timelineTrack');
-            const rect = track.getBoundingClientRect();
+            const container = document.getElementById('timelineTracksContainer');
+            const rect = container.getBoundingClientRect();
             const clickX = event.clientX - rect.left;
             const percentage = clickX / rect.width;
 
@@ -745,7 +773,6 @@
         }
 
         function updatePlayhead(forcedTime) {
-            const track = document.getElementById('timelineTrack');
             const duration = isVideoLoaded ? (videoElement.duration || 1) : 10;
             const time = forcedTime !== undefined ? forcedTime : videoElement.currentTime;
             const percent = Math.min(100, (time / duration) * 100);
@@ -788,14 +815,15 @@
 
             keyframes[currentTime.toFixed(1)] = { x, scale, opacity };
 
-            const track = document.getElementById('timelineTrack');
             const duration = isVideoLoaded ? (videoElement.duration || 1) : 10;
             const percent = (currentTime / duration) * 100;
 
             const marker = document.createElement('div');
             marker.className = 'keyframe-marker';
             marker.style.left = `${percent}%`;
-            track.appendChild(marker);
+            // 첫 번째 트랙에 키프레임 마커 추가
+            const firstTrack = document.querySelector('.timeline-track');
+            if (firstTrack) firstTrack.appendChild(marker);
         }
 
         function applyCurrentKeyframe() {

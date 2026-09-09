@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>간편 동영상 편집기 & 애니메이션</title>
+    <title>간편 동영상 편집기</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,19 +13,18 @@
         }
         .container {
             max-width: 500px;
-            margin: 0 auto;
+            margin: 0 auto 20px auto;
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
         }
         input, button {
             margin-top: 15px;
             padding: 10px;
             font-size: 16px;
         }
-        /* 애니메이션이 적용될 상자 스타일 */
+        /* 애니메이션 대상 박스 */
         #targetBox {
             width: 100px;
             height: 100px;
@@ -41,68 +40,102 @@
             border-radius: 6px;
             cursor: pointer;
         }
+        .save-btn {
+            background-color: #51cf66;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 1번 영역: 동영상 파일 업로드 -->
+    <!-- 1번 영역: 동영상 파일 선택 -->
     <div class="container">
         <h2>동영상 편집 업로드</h2>
         <p>편집할 동영상을 선택해 주세요 (구형 폰 배려 가벼운 모드)</p>
         
         <input type="file" id="videoFile" accept="video/*">
         <br>
-        <button class="action-btn" onclick="uploadVideo()">서버로 보내기</button>
-        
-        <p id="status" style="margin-top: 20px; color: blue;"></p>
+        <p id="status" style="margin-top: 15px; color: blue; font-size: 14px;"></p>
     </div>
 
-    <!-- 2번 영역: 키프레임 애니메이션 미리보기 -->
+    <!-- 2번 영역: 키프레임 애니메이션 테스트 -->
     <div class="container">
-        <h2>키프레임 애니메이션 테스트</h2>
-        <p>상자가 움직이는 효과를 미리 확인해 보세요.</p>
+        <h2>키프레임 애니메이션</h2>
+        <p>요소가 움직이는 효과를 미리 확인하세요.</p>
 
         <div id="targetBox"></div>
 
         <button class="action-btn" onclick="playAnimation()">애니메이션 재생</button>
     </div>
 
+    <!-- 3번 영역: 기기 파일 저장 (다운로드) -->
+    <div class="container">
+        <h2>프로젝트 파일 저장</h2>
+        <p>현재 편집 설정을 내 기기에 파일로 저장합니다.</p>
+        <button class="save-btn" onclick="saveProjectToDevice()">기기에 파일 저장하기</button>
+    </div>
+
     <script>
-        // [기능 1] 동영상 전송 함수 (나중에 Render 서버 주소와 연결)
-        function uploadVideo() {
-            const fileInput = document.getElementById('videoFile');
-            const status = document.getElementById('status');
+        // [기능 1] 파일 선택 감지
+        const fileInput = document.getElementById('videoFile');
+        const status = document.getElementById('status');
 
-            if (fileInput.files.length === 0) {
-                alert("먼저 동영상 파일을 선택해 주세요!");
-                return;
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                status.innerText = `선택된 파일: ${fileInput.files[0].name}`;
             }
+        });
 
-            status.innerText = "영상을 서버로 전송 중입니다... 잠시만 기다려주세요!";
-            
-            // 나중에 Render 서버 통신 코드가 들어갈 자리입니다.
-        }
-
-        // [기능 2] 키프레임 애니메이션 실행 함수
+        // [기능 2] 키프레임 애니메이션 실행
         const keyframes = {
-            start: { x: 0, scale: 1, opacity: 1 },      // 시작 상태
-            end: { x: 150, scale: 1.4, opacity: 0.6 }    // 1초 뒤 변화된 상태
+            start: { x: 0, scale: 1, opacity: 1 },
+            end: { x: 130, scale: 1.3, opacity: 0.7 }
         };
 
         function playAnimation() {
             const box = document.getElementById('targetBox');
 
-            // 시작 위치로 초기화
+            // 초기 위치 설정
             box.style.transform = `translateX(0px) scale(${keyframes.start.scale})`;
             box.style.opacity = keyframes.start.opacity;
 
-            // 약간의 딜레이 후 목표 위치로 이동 (애니메이션 발생)
+            // 딜레이 후 목표 위치로 변형 (애니메이션 효과)
             setTimeout(() => {
                 box.style.transform = `translateX(${keyframes.end.x}px) scale(${keyframes.end.scale})`;
                 box.style.opacity = keyframes.end.opacity;
             }, 50);
         }
+
+        // [기능 3] 기기 저장 (다운로드 API)
+        function saveProjectToDevice() {
+            // 저장할 데이터 (나중에 편집 설정값을 JSON 형태로 저장 가능)
+            const projectData = {
+                version: "1.0",
+                animation: keyframes,
+                savedAt: new Date().toISOString()
+            };
+
+            const dataString = JSON.stringify(projectData, null, 2);
+            
+            // 가상의 Blob 파일 생성 후 다운로드 링크 연결
+            const blob = new Blob([dataString], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'video-edit-project.json'; // 기기에 저장될 파일 이름
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 
 </body>
 </html>
+

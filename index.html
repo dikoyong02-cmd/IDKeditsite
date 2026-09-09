@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDK Video Editor - Retro Web</title>
+    <title>IDK Video Editor - Filmora Y2K Retro</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -12,6 +12,7 @@
             --win-darker: #404040;
             --win-blue: #000080;
             --win-text: #000000;
+            --panel-inner: #ececec;
         }
 
         [data-theme="dark"] {
@@ -21,32 +22,33 @@
             --win-darker: #000000;
             --win-blue: #1a0033;
             --win-text: #ffccff;
+            --panel-inner: #1c1c1c;
         }
 
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            padding: 5px;
+            padding: 4px;
             font-family: 'MS Sans Serif', 'Microsoft Sans Serif', 'Courier New', monospace;
-            background-color: #008080;
+            background-color: var(--win-bg);
             color: var(--win-text);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
         }
 
-        /* 윈도우 창 박스 스타일 */
+        /* 윈도우 창 공통 스타일 */
         .window {
             background-color: var(--win-bg);
             border-top: 2px solid var(--win-light);
             border-left: 2px solid var(--win-light);
             border-right: 2px solid var(--win-darker);
             border-bottom: 2px solid var(--win-darker);
-            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
         }
 
         .title-bar {
@@ -54,7 +56,7 @@
             color: white;
             padding: 3px 6px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -67,37 +69,115 @@
             border-left: 1px solid var(--win-light);
             border-right: 1px solid var(--win-darker);
             border-bottom: 1px solid var(--win-darker);
-            width: 16px;
-            height: 14px;
-            font-size: 9px;
-            line-height: 8px;
+            width: 14px;
+            height: 12px;
+            font-size: 8px;
+            line-height: 6px;
             padding: 0;
             cursor: pointer;
         }
 
-        .window-body {
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        /* 윈도우 안쪽 오목한 패널 */
         .sunken-panel {
-            background-color: white;
+            background-color: var(--panel-inner);
             border-top: 2px solid var(--win-darker);
             border-left: 2px solid var(--win-darker);
             border-right: 2px solid var(--win-light);
             border-bottom: 2px solid var(--win-light);
-            padding: 8px;
+            padding: 6px;
+            overflow: auto;
         }
 
-        [data-theme="dark"] .sunken-panel {
-            background-color: #1c1c1c;
-            color: #ffccff;
+        /* 필모라 스타일 상단 메뉴바 */
+        .top-menu-bar {
+            height: 35px;
+            background-color: var(--win-bg);
+            border-bottom: 2px solid var(--win-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+        .menu-items {
+            display: flex;
+            gap: 12px;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--win-text);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            padding: 2px 5px;
+        }
+        .menu-btn:hover {
+            background-color: var(--win-blue);
+            color: white;
         }
 
-        button, input[type="file"], select {
+        /* 메인 레이아웃 구조 (필모라 배치) */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 260px;
+            grid-template-rows: 1fr 140px;
+            flex-grow: 1;
+            gap: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        /* 1. 미디어/소스 라이브러리 (좌측 상단) */
+        .panel-library {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* 2. 미리보기 창 (중앙 상단) */
+        .panel-preview {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #targetBox {
+            width: 110px;
+            height: 110px;
+            background: linear-gradient(135deg, var(--win-blue), #ff00ff);
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #fff;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        /* 3. 인스펙터 / 속성 패널 (우측) */
+        .panel-inspector {
+            grid-column: 3;
+            grid-row: 1 / span 2;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* 4. 타임라인 영역 (하단) */
+        .panel-timeline {
+            grid-column: 1 / span 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        button, input[type="file"] {
             background-color: var(--win-bg);
             color: var(--win-text);
             border-top: 2px solid var(--win-light);
@@ -109,132 +189,101 @@
             font-size: 11px;
             cursor: pointer;
         }
-
         button:active {
             border-top: 2px solid var(--win-darker);
             border-left: 2px solid var(--win-darker);
             border-right: 2px solid var(--win-light);
             border-bottom: 2px solid var(--win-light);
-            padding: 5px 7px 3px 9px;
-        }
-
-        .preview-container {
-            width: 100%;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #000;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #targetBox {
-            width: 100px;
-            height: 100px;
-            background-color: #ff00ff;
-            border: 2px solid #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #fff;
-            transition: transform 0.3s, opacity 0.3s;
         }
 
         .control-group {
             margin-bottom: 8px;
             font-size: 11px;
         }
-
         .control-group label {
             display: block;
             margin-bottom: 3px;
         }
-
         .control-group input[type="range"] {
             width: 100%;
-        }
-
-        .menu-bar {
-            display: flex;
-            gap: 10px;
-            padding: 2px 4px;
-            background-color: var(--win-bg);
-            border-bottom: 1px solid var(--win-dark);
-            font-size: 11px;
-        }
-
-        .menu-item {
-            cursor: pointer;
-            padding: 1px 4px;
-        }
-        .menu-item:hover {
-            background-color: var(--win-blue);
-            color: white;
         }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div class="window">
-        <div class="title-bar">
-            <span>IDK_Video_Editor.exe</span>
-            <div class="title-bar-controls">
-                <button>-</button>
-                <button>🗖</button>
-                <button>X</button>
+    <!-- 상단 메뉴바 (필모라 스타일 배치) -->
+    <div class="top-menu-bar">
+        <div class="menu-items">
+            <span style="font-weight: bold; color: var(--win-blue);">IDK-EDITSITE</span>
+            <button class="menu-btn" onclick="toggleTheme()">테마전환</button>
+            <button class="menu-btn" onclick="saveProjectToDevice()">프로젝트저장</button>
+        </div>
+        <div>미디어 편집기 v1.0</div>
+    </div>
+
+    <div class="main-layout">
+
+        <!-- 1. 미디어 라이브러리 패널 -->
+        <div class="window panel-library">
+            <div class="title-bar">
+                <span>Media Source</span>
+                <div class="title-bar-controls"><button>-</button><button>X</button></div>
+            </div>
+            <div class="sunken-panel" style="flex-grow: 1;">
+                <label style="font-weight: bold; font-size: 11px;">비디오 파일 업로드</label>
+                <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 6px;">
+                <div id="status" style="font-size: 10px; margin-top: 6px; color: var(--win-text);"></div>
             </div>
         </div>
 
-        <div class="menu-bar">
-            <div class="menu-item" onclick="toggleTheme()">File(테마전환)</div>
-            <div class="menu-item" onclick="saveProjectToDevice()">Save</div>
-            <div class="menu-item" onclick="playAutoAnimation()">Test</div>
-        </div>
-
-        <div class="window-body">
-            <!-- 미디어 업로드 -->
-            <div class="sunken-panel">
-                <label style="font-size: 11px; font-weight: bold;">Media Source</label>
-                <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 5px;">
-                <div id="status" style="font-size: 10px; margin-top: 4px; color: var(--win-text);"></div>
+        <!-- 2. 프리뷰 패널 -->
+        <div class="window panel-preview">
+            <div class="title-bar" style="width: 100%;">
+                <span>Preview Window</span>
+                <div class="title-bar-controls"><button>-</button><button>X</button></div>
             </div>
-
-            <!-- 미리보기 화면 -->
-            <div class="preview-container sunken-panel" style="padding:0;">
+            <div class="sunken-panel" style="width: 100%; flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div id="targetBox">PREVIEW</div>
+                <div style="font-size: 10px; margin-top: 10px;">00:00 / 00:10 (Keyframe Track)</div>
             </div>
-            <div style="font-size: 10px; text-align: center;">00:00 / 00:10 (Keyframe Track)</div>
+        </div>
 
-            <!-- 속성 조절 패널 -->
-            <div class="sunken-panel">
-                <div style="font-weight: bold; margin-bottom: 6px; font-size: 11px;">Keyframe Properties</div>
-                
+        <!-- 3. 인스펙터 속성 조절 패널 -->
+        <div class="window panel-inspector">
+            <div class="title-bar">
+                <span>Keyframe Properties</span>
+                <div class="title-bar-controls"><button>-</button><button>X</button></div>
+            </div>
+            <div class="sunken-panel" style="flex-grow: 1;">
                 <div class="control-group">
                     <label>X Position</label>
-                    <input type="range" id="rangeX" min="-100" max="100" value="0" oninput="updateAnimation()">
+                    <input type="range" id="rangeX" min="-90" max="90" value="0" oninput="updateAnimation()">
                 </div>
-
                 <div class="control-group">
                     <label>Scale</label>
                     <input type="range" id="rangeScale" min="0.5" max="1.5" step="0.1" value="1" oninput="updateAnimation()">
                 </div>
-
                 <div class="control-group">
                     <label>Opacity</label>
-                    <input type="range" id="rangeOpacity" min="0.1" max="1" step="0.1" value="1" oninput="updateAnimation()">
+                    <input type="range" id="rangeOpacity" min="0.2" max="1" step="0.1" value="1" oninput="updateAnimation()">
                 </div>
+                <button onclick="playAutoAnimation()" style="width: 100%; margin-top: 10px;">애니메이션 테스트</button>
             </div>
+        </div>
 
-            <!-- 타임라인 -->
-            <div class="sunken-panel">
-                <div style="font-size: 10px; margin-bottom: 4px;">Timeline Track</div>
-                <div style="width: 100%; height: 25px; background-color: var(--win-blue); display: flex; align-items: center; padding-left: 6px; font-size: 10px; color: white;">
-                    Video Clip #1
+        <!-- 4. 타임라인 패널 -->
+        <div class="window panel-timeline">
+            <div class="title-bar">
+                <span>Timeline Track</span>
+                <div class="title-bar-controls"><button>-</button><button>X</button></div>
+            </div>
+            <div class="sunken-panel" style="flex-grow: 1; display: flex; align-items: center;">
+                <div style="width: 100%; height: 26px; background-color: var(--win-blue); display: flex; align-items: center; padding-left: 8px; font-size: 10px; color: white; border: 1px solid white;">
+                    Video Clip #1 (Track 1)
                 </div>
             </div>
         </div>
+
     </div>
 
     <script>
@@ -265,10 +314,10 @@
 
         function playAutoAnimation() {
             const box = document.getElementById('targetBox');
-            box.style.transform = `translateX(60px) scale(1.2)`;
+            box.style.transform = `translateX(50px) scale(1.3)`;
             box.style.opacity = 0.5;
-            document.getElementById('rangeX').value = 60;
-            document.getElementById('rangeScale').value = 1.2;
+            document.getElementById('rangeX').value = 50;
+            document.getElementById('rangeScale').value = 1.3;
             document.getElementById('rangeOpacity').value = 0.5;
 
             setTimeout(() => {

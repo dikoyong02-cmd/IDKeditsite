@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IDK Video Editor - Fixed Resize & Timeline</title>
+    <title>IDK Video Editor - Bug Fixed</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -181,7 +181,7 @@
             border: 1.5px solid white; display: flex; align-items: center; justify-content: space-between;
             padding: 0 8px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
             overflow: hidden; z-index: 10; cursor: pointer; border-radius: 2px;
-            touch-action: none; /* 스크롤 방지 및 조작 최적화 */
+            touch-action: none;
         }
         .timeline-clip.selected { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); background-color: #3b0066; }
         .clip-handle {
@@ -205,7 +205,7 @@
             </select>
             <button onclick="saveProject()">저장</button>
         </div>
-        <div style="font-size: 10px;">Touch Pro v2.6</div>
+        <div style="font-size: 10px;">Touch Pro v2.7</div>
     </div>
 
     <div class="main-workspace" id="workspace">
@@ -371,7 +371,8 @@
                     duration: tempVid.duration || 10
                 };
                 sources.push(newSource);
-                timelineClips.push({
+                
+                const newClip = {
                     id: 'clip_' + Date.now(),
                     sourceId: newSource.id,
                     name: newSource.name,
@@ -381,7 +382,14 @@
                     duration: Math.min(newSource.duration, 10),
                     url: url,
                     x: 0, scale: 1, opacity: 1, speed: 1, volume: 100, anim: 'none'
-                });
+                };
+                timelineClips.push(newClip);
+                
+                // 업로드 직후 바로 프리뷰에 보이기 위해 연결
+                videoElement.src = url;
+                selectedClipIds = [newClip.id];
+                loadClipProperties(newClip);
+
                 renderAll();
             };
         };
@@ -483,23 +491,22 @@
 
                 const leftHandle = document.createElement('div');
                 leftHandle.className = 'clip-handle left';
-                leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left', zoomFactor);
-                leftHandle.ontatart = (e) => {}; // placeholder
                 leftHandle.addEventListener('touchstart', (e) => initResizeClip(e, clip, 'left', zoomFactor), {passive: false});
+                leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left', zoomFactor);
 
                 const rightHandle = document.createElement('div');
                 rightHandle.className = 'clip-handle right';
-                rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right', zoomFactor);
                 rightHandle.addEventListener('touchstart', (e) => initResizeClip(e, clip, 'right', zoomFactor), {passive: false});
+                rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right', zoomFactor);
 
-                clipEl.onmousedown = (e) => {
-                    if (e.target.classList.contains('clip-handle')) return;
-                    initMoveClipX(e, clip, zoomFactor);
-                };
                 clipEl.addEventListener('touchstart', (e) => {
                     if (e.target.classList.contains('clip-handle')) return;
                     initMoveClipX(e, clip, zoomFactor);
                 }, {passive: false});
+                clipEl.onmousedown = (e) => {
+                    if (e.target.classList.contains('clip-handle')) return;
+                    initMoveClipX(e, clip, zoomFactor);
+                };
 
                 clipEl.appendChild(leftHandle);
                 clipEl.appendChild(rightHandle);
@@ -519,6 +526,17 @@
             document.getElementById('rangeVolume').value = clip.volume !== undefined ? clip.volume : 100;
             document.getElementById('valVolume').innerText = clip.volume !== undefined ? clip.volume : 100;
             document.getElementById('animSelect').value = clip.anim || 'none';
+
+            // 비디오 클립인 경우 프리뷰에 즉시 소스 연결 및 속성 반영
+            if (clip.type === 'video' && clip.url) {
+                if (videoElement.src !== clip.url) {
+                    videoElement.src = clip.url;
+                }
+                videoElement.style.transform = `translate(${clip.x || 0}px, 0px) scale(${clip.scale || 1})`;
+                videoElement.style.opacity = clip.opacity || 1;
+                videoElement.playbackRate = clip.speed || 1;
+                videoElement.volume = (clip.volume !== undefined ? clip.volume : 100) / 100;
+            }
 
             const speedGroup = document.getElementById('speedGroup');
             const volumeGroup = document.getElementById('volumeGroup');
@@ -686,9 +704,22 @@
         }
 
         function deleteSelectedSource() {
-            if (selectedSourceIndex === null) return;
+            if (selectedSourceIndex === null) {
+                alert('삭제할 소스를 선택해주세요.');
+                return;
+            }
+            const sourceToDelete = sources[selectedSourceIndex];
+            
+            // 해당 소스를 사용하는 타임라인 클립도 함께 삭제
+            timelineClips = timelineClips.filter(c => c.sourceId !== sourceToDelete.id);
+            
+            // 소스 목록에서 제거
             sources.splice(selectedSourceIndex, 1);
             selectedSourceIndex = null;
+            
+            // 프리뷰 비디오 초기화
+            videoElement.src = "";
+            
             renderAll();
         }
 
@@ -727,6 +758,9 @@
             const activeClip = timelineClips.find(c => videoElement.currentTime >= c.start && videoElement.currentTime <= c.start + c.duration);
             if (activeClip) {
                 if (activeClip.type === 'video') {
+                    if (videoElement.src !== activeClip.url && activeClip.url) {
+                        videoElement.src = activeClip.url;
+                    }
                     videoElement.playbackRate = activeClip.speed || 1;
                     videoElement.volume = (activeClip.volume !== undefined ? activeClip.volume : 100) / 100;
                 }

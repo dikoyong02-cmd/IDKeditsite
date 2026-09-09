@@ -116,11 +116,11 @@
             border-bottom: 2px solid var(--win-light);
         }
 
-        /* 메인 워크스페이스 그리드 (자유로운 크기 조절 지원) */
+        /* 메인 워크스페이스 그리드 */
         .main-workspace {
             display: grid;
             grid-template-columns: var(--col-1, 220px) 8px 1fr 8px var(--col-3, 260px);
-            grid-template-rows: 1fr 8px var(--row-2, 190px);
+            grid-template-rows: 1fr 8px var(--row-2, 220px);
             flex-grow: 1;
             gap: 0;
             overflow: hidden;
@@ -214,7 +214,6 @@
         .panel-inspector { grid-column: 5; grid-row: 1 / span 3; }
         .panel-timeline { grid-column: 1 / span 3; grid-row: 3; }
 
-        /* 프리뷰 패널 내부 (필모라식: 큰 화면 + 하단 재생 컨트롤 바) */
         .panel-preview .sunken-panel {
             display: flex;
             flex-direction: column;
@@ -253,7 +252,6 @@
             color: #fff;
         }
 
-        /* 재생 컨트롤 바 - 명확하게 보이도록 강조 */
         .playback-bar {
             flex-shrink: 0;
             width: 100%;
@@ -298,7 +296,7 @@
             width: 100%;
         }
 
-        /* 타임라인 패널 */
+        /* 타임라인 패널 (칸 높이 확장) */
         .panel-timeline .sunken-panel {
             display: flex;
             flex-direction: column;
@@ -314,9 +312,10 @@
 
         .timeline-ruler {
             position: relative;
-            height: 16px;
+            height: 18px;
             border-bottom: 1px solid var(--win-dark);
             font-size: 9px;
+            flex-shrink: 0;
         }
         .ruler-tick {
             position: absolute;
@@ -331,7 +330,7 @@
             position: relative;
             width: 100%;
             flex: 1 1 auto;
-            min-height: 44px;
+            min-height: 90px; /* 타임라인 칸 높이 대폭 확장 */
             background-color: var(--win-darker);
             border: 1px solid var(--win-light);
             cursor: pointer;
@@ -366,14 +365,14 @@
         }
         #clipBar {
             position: absolute;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
+            left: 0; top: 4px;
+            width: 100%; height: calc(100% - 8px);
             background-color: var(--win-blue);
-            opacity: 0.5;
+            opacity: 0.6;
             display: flex;
             align-items: center;
             padding-left: 6px;
-            font-size: 10px;
+            font-size: 11px;
             color: white;
             white-space: nowrap;
             overflow: hidden;
@@ -396,7 +395,7 @@
             <button onclick="resetLayout()">창 크기/위치 초기화</button>
             <button onclick="saveProjectToDevice()">프로젝트 저장</button>
         </div>
-        <div style="font-size: 10px;">Full Editor v2.6</div>
+        <div style="font-size: 10px;">Full Editor v2.7</div>
     </div>
 
     <!-- 메인 워크스페이스 -->
@@ -411,6 +410,8 @@
             <div class="sunken-panel">
                 <label style="font-weight: bold; font-size: 11px;">비디오 파일 업로드</label>
                 <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 6px;">
+                <!-- 파일 삭제 버튼 추가 -->
+                <button onclick="removeLoadedFile()" style="width: 100%; margin-top: 6px; background-color: #5a1a1a; color: white;">🗑 파일 삭제 / 초기화</button>
                 <div id="status" style="font-size: 10px; margin-top: 6px;"></div>
             </div>
         </div>
@@ -475,7 +476,7 @@
             </div>
             <div class="sunken-panel">
                 <div class="timeline-header">
-                    <span>클릭하면 그 위치로 이동, 키프레임은 보라색 막대로 표시됩니다.</span>
+                    <span>타임라인 영역이 확장되었습니다. 클릭하여 이동하고 키프레임을 확인하세요.</span>
                 </div>
                 <div class="timeline-ruler" id="timelineRuler"></div>
                 <div class="timeline-track-area" id="timelineTrack" onclick="seekTimeline(event)">
@@ -488,7 +489,6 @@
     </div>
 
     <script>
-        // 테마 관리
         function changeTheme(themeName) {
             document.getElementById('mainBody').setAttribute('data-theme', themeName);
             localStorage.setItem('idk_theme', themeName);
@@ -503,13 +503,11 @@
             renderRuler();
         });
 
-        // 패널 접기/펼치기 (타이틀바의 - 버튼)
         function toggleCollapse(btn) {
             const win = btn.closest('.window');
             win.classList.toggle('collapsed');
         }
 
-        // 워크스페이스 리사이징 구현
         const workspace = document.getElementById('workspace');
         const resizer1 = document.getElementById('resizer1');
         const resizer2 = document.getElementById('resizer2');
@@ -520,10 +518,9 @@
         resizer2.addEventListener('mousedown', (e) => { isResizing = 'col3'; resizer2.classList.add('active'); e.preventDefault(); });
         resizer3.addEventListener('mousedown', (e) => { isResizing = 'row2'; resizer3.classList.add('active'); e.preventDefault(); });
 
-        // 더블클릭으로 해당 구분선만 초기화
         resizer1.addEventListener('dblclick', () => workspace.style.setProperty('--col-1', '220px'));
         resizer2.addEventListener('dblclick', () => workspace.style.setProperty('--col-3', '260px'));
-        resizer3.addEventListener('dblclick', () => workspace.style.setProperty('--row-2', '190px'));
+        resizer3.addEventListener('dblclick', () => workspace.style.setProperty('--row-2', '220px'));
 
         window.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
@@ -536,7 +533,7 @@
                 if (w > 180 && w < 500) workspace.style.setProperty('--col-3', w + 'px');
             } else if (isResizing === 'row2') {
                 let h = rect.bottom - e.clientY;
-                if (h > 100 && h < 420) workspace.style.setProperty('--row-2', h + 'px');
+                if (h > 120 && h < 450) workspace.style.setProperty('--row-2', h + 'px');
             }
         });
 
@@ -548,11 +545,10 @@
         function resetLayout() {
             workspace.style.setProperty('--col-1', '220px');
             workspace.style.setProperty('--col-3', '260px');
-            workspace.style.setProperty('--row-2', '190px');
+            workspace.style.setProperty('--row-2', '220px');
             document.querySelectorAll('.window.collapsed').forEach(w => w.classList.remove('collapsed'));
         }
 
-        // 비디오 업로드 및 재생 기능
         const fileInput = document.getElementById('videoFile');
         const videoElement = document.getElementById('videoElement');
         const targetBox = document.getElementById('targetBox');
@@ -563,7 +559,7 @@
         const playheadLine = document.getElementById('playheadLine');
 
         let isVideoLoaded = false;
-        let keyframes = {}; // 시간별 키프레임 데이터 저장
+        let keyframes = {};
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
@@ -571,7 +567,7 @@
                 const fileURL = URL.createObjectURL(file);
                 videoElement.src = fileURL;
                 videoElement.style.display = 'block';
-                targetBox.style.display = 'none'; // 실제 영상으로 대체
+                targetBox.style.display = 'none';
                 status.innerText = `Loaded: ${file.name}`;
                 isVideoLoaded = true;
 
@@ -582,6 +578,25 @@
                 };
             }
         });
+
+        // 파일 삭제 및 초기화 함수 추가
+        function removeLoadedFile() {
+            videoElement.pause();
+            videoElement.removeAttribute('src');
+            videoElement.load();
+            videoElement.style.display = 'none';
+            targetBox.style.display = 'flex';
+            fileInput.value = '';
+            status.innerText = '';
+            isVideoLoaded = false;
+            clipBar.innerText = '영상을 업로드하면 여기에 표시됩니다';
+            keyframes = {};
+            
+            // 기존 키프레임 마커 DOM 모두 제거
+            document.querySelectorAll('.keyframe-marker').forEach(m => m.remove());
+            updateTimeDisplay();
+            renderRuler();
+        }
 
         videoElement.addEventListener('timeupdate', () => {
             updateTimeDisplay();
@@ -608,7 +623,6 @@
 
         function togglePlay() {
             if (!isVideoLoaded) {
-                // 비디오 없을 땐 박스 애니메이션 테스트 구동
                 playAutoAnimation();
                 return;
             }
@@ -636,7 +650,6 @@
             );
         }
 
-        // 타임라인 클릭 이동
         function seekTimeline(event) {
             const track = document.getElementById('timelineTrack');
             const rect = track.getBoundingClientRect();
@@ -672,7 +685,6 @@
             }
         }
 
-        // 키프레임 시스템
         function updateKeyframeProperty() {
             const x = document.getElementById('rangeX').value;
             const scale = document.getElementById('rangeScale').value;
@@ -693,10 +705,8 @@
             const scale = document.getElementById('rangeScale').value;
             const opacity = document.getElementById('rangeOpacity').value;
 
-            // 키프레임 객체에 저장
             keyframes[currentTime.toFixed(1)] = { x, scale, opacity };
 
-            // 타임라인 UI에 마커 표시
             const track = document.getElementById('timelineTrack');
             const duration = isVideoLoaded ? (videoElement.duration || 1) : 10;
             const percent = (currentTime / duration) * 100;
@@ -708,7 +718,6 @@
         }
 
         function applyCurrentKeyframe() {
-            // 현재 시간에 등록된 키프레임이 있다면 자동 반영
             const currentTime = videoElement.currentTime.toFixed(1);
             if (keyframes[currentTime]) {
                 const kf = keyframes[currentTime];
@@ -762,3 +771,4 @@
 
 </body>
 </html>
+

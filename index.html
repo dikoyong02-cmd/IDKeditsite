@@ -116,11 +116,11 @@
             border-bottom: 2px solid var(--win-light);
         }
 
-        /* 메인 워크스페이스 그리드 */
+        /* 메인 워크스페이스 그리드 (타임라인 기본 높이 300px로 대폭 확장) */
         .main-workspace {
             display: grid;
-            grid-template-columns: var(--col-1, 220px) 8px 1fr 8px var(--col-3, 260px);
-            grid-template-rows: 1fr 8px var(--row-2, 220px);
+            grid-template-columns: var(--col-1, 240px) 8px 1fr 8px var(--col-3, 260px);
+            grid-template-rows: 1fr 8px var(--row-2, 300px);
             flex-grow: 1;
             gap: 0;
             overflow: hidden;
@@ -296,11 +296,39 @@
             width: 100%;
         }
 
-        /* 타임라인 패널 (칸 높이 확장) */
+        /* 미디어 파일 목록 박스 스타일 */
+        .file-list-box {
+            background: var(--win-darker);
+            border: 1px solid var(--win-light);
+            height: 100px;
+            margin-top: 6px;
+            overflow-y: auto;
+            color: white;
+            font-size: 10px;
+            padding: 4px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px;
+            cursor: pointer;
+            margin-bottom: 2px;
+            border: 1px solid transparent;
+        }
+        .file-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .file-item.selected {
+            background-color: var(--win-blue);
+            border-color: white;
+        }
+
+        /* 타임라인 패널 (높이 확장 완료) */
         .panel-timeline .sunken-panel {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
         }
 
         .timeline-header {
@@ -312,9 +340,9 @@
 
         .timeline-ruler {
             position: relative;
-            height: 18px;
+            height: 22px;
             border-bottom: 1px solid var(--win-dark);
-            font-size: 9px;
+            font-size: 10px;
             flex-shrink: 0;
         }
         .ruler-tick {
@@ -330,7 +358,7 @@
             position: relative;
             width: 100%;
             flex: 1 1 auto;
-            min-height: 90px; /* 타임라인 칸 높이 대폭 확장 */
+            min-height: 160px; /* 타임라인 칸 대폭 확장 */
             background-color: var(--win-darker);
             border: 1px solid var(--win-light);
             cursor: pointer;
@@ -363,19 +391,21 @@
             z-index: 4;
             pointer-events: none;
         }
-        #clipBar {
+        .timeline-clip {
             position: absolute;
-            left: 0; top: 4px;
-            width: 100%; height: calc(100% - 8px);
+            top: 6px;
+            height: calc(100% - 12px);
             background-color: var(--win-blue);
-            opacity: 0.6;
+            border: 1px solid white;
+            opacity: 0.8;
             display: flex;
             align-items: center;
-            padding-left: 6px;
+            padding-left: 8px;
             font-size: 11px;
             color: white;
             white-space: nowrap;
             overflow: hidden;
+            z-index: 2;
         }
     </style>
 </head>
@@ -395,7 +425,7 @@
             <button onclick="resetLayout()">창 크기/위치 초기화</button>
             <button onclick="saveProjectToDevice()">프로젝트 저장</button>
         </div>
-        <div style="font-size: 10px;">Full Editor v2.7</div>
+        <div style="font-size: 10px;">Full Editor v2.9</div>
     </div>
 
     <!-- 메인 워크스페이스 -->
@@ -410,9 +440,14 @@
             <div class="sunken-panel">
                 <label style="font-weight: bold; font-size: 11px;">비디오 파일 업로드</label>
                 <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 6px;">
-                <!-- 파일 삭제 버튼 추가 -->
-                <button onclick="removeLoadedFile()" style="width: 100%; margin-top: 6px; background-color: #5a1a1a; color: white;">🗑 파일 삭제 / 초기화</button>
-                <div id="status" style="font-size: 10px; margin-top: 6px;"></div>
+                
+                <label style="font-weight: bold; font-size: 11px; margin-top: 8px; display: block;">업로드된 파일 목록 (선택 삭제 가능)</label>
+                <div class="file-list-box" id="fileListBox">
+                    <div style="color: #888; text-align: center; padding-top: 30px;">업로드된 파일 없음</div>
+                </div>
+
+                <button onclick="deleteSelectedFile()" style="width: 100%; margin-top: 6px; background-color: #5a1a1a; color: white;">🗑 선택한 파일 삭제</button>
+                <div id="status" style="font-size: 10px; margin-top: 4px;"></div>
             </div>
         </div>
 
@@ -476,11 +511,11 @@
             </div>
             <div class="sunken-panel">
                 <div class="timeline-header">
-                    <span>타임라인 영역이 확장되었습니다. 클릭하여 이동하고 키프레임을 확인하세요.</span>
+                    <span>타임라인 영역이 대폭 확장되었습니다. 클립과 키프레임을 확인하세요.</span>
                 </div>
                 <div class="timeline-ruler" id="timelineRuler"></div>
                 <div class="timeline-track-area" id="timelineTrack" onclick="seekTimeline(event)">
-                    <div id="clipBar">영상을 업로드하면 여기에 표시됩니다</div>
+                    <div id="timelineClipsContainer"></div>
                     <div id="playheadLine"></div>
                 </div>
             </div>
@@ -518,9 +553,9 @@
         resizer2.addEventListener('mousedown', (e) => { isResizing = 'col3'; resizer2.classList.add('active'); e.preventDefault(); });
         resizer3.addEventListener('mousedown', (e) => { isResizing = 'row2'; resizer3.classList.add('active'); e.preventDefault(); });
 
-        resizer1.addEventListener('dblclick', () => workspace.style.setProperty('--col-1', '220px'));
+        resizer1.addEventListener('dblclick', () => workspace.style.setProperty('--col-1', '240px'));
         resizer2.addEventListener('dblclick', () => workspace.style.setProperty('--col-3', '260px'));
-        resizer3.addEventListener('dblclick', () => workspace.style.setProperty('--row-2', '220px'));
+        resizer3.addEventListener('dblclick', () => workspace.style.setProperty('--row-2', '300px'));
 
         window.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
@@ -533,7 +568,7 @@
                 if (w > 180 && w < 500) workspace.style.setProperty('--col-3', w + 'px');
             } else if (isResizing === 'row2') {
                 let h = rect.bottom - e.clientY;
-                if (h > 120 && h < 450) workspace.style.setProperty('--row-2', h + 'px');
+                if (h > 180 && h < 600) workspace.style.setProperty('--row-2', h + 'px');
             }
         });
 
@@ -543,9 +578,9 @@
         });
 
         function resetLayout() {
-            workspace.style.setProperty('--col-1', '220px');
+            workspace.style.setProperty('--col-1', '240px');
             workspace.style.setProperty('--col-3', '260px');
-            workspace.style.setProperty('--row-2', '220px');
+            workspace.style.setProperty('--row-2', '300px');
             document.querySelectorAll('.window.collapsed').forEach(w => w.classList.remove('collapsed'));
         }
 
@@ -555,47 +590,100 @@
         const status = document.getElementById('status');
         const playBtn = document.getElementById('playBtn');
         const timeDisplay = document.getElementById('timeDisplay');
-        const clipBar = document.getElementById('clipBar');
         const playheadLine = document.getElementById('playheadLine');
+        const fileListBox = document.getElementById('fileListBox');
+        const timelineClipsContainer = document.getElementById('timelineClipsContainer');
 
         let isVideoLoaded = false;
         let keyframes = {};
+        let uploadedFiles = [];
+        let selectedFileIndex = null;
 
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
-                const fileURL = URL.createObjectURL(file);
-                videoElement.src = fileURL;
-                videoElement.style.display = 'block';
-                targetBox.style.display = 'none';
-                status.innerText = `Loaded: ${file.name}`;
-                isVideoLoaded = true;
-
-                videoElement.onloadedmetadata = function () {
-                    updateTimeDisplay();
-                    clipBar.innerText = `${file.name} (${formatTime(videoElement.duration)})`;
-                    renderRuler();
-                };
+                uploadedFiles.push(file);
+                selectedFileIndex = uploadedFiles.length - 1;
+                renderFileList();
+                loadSelectedFile(selectedFileIndex);
             }
         });
 
-        // 파일 삭제 및 초기화 함수 추가
-        function removeLoadedFile() {
-            videoElement.pause();
-            videoElement.removeAttribute('src');
-            videoElement.load();
-            videoElement.style.display = 'none';
-            targetBox.style.display = 'flex';
-            fileInput.value = '';
-            status.innerText = '';
-            isVideoLoaded = false;
-            clipBar.innerText = '영상을 업로드하면 여기에 표시됩니다';
-            keyframes = {};
+        function renderFileList() {
+            fileListBox.innerHTML = '';
+            if (uploadedFiles.length === 0) {
+                fileListBox.innerHTML = '<div style="color: #888; text-align: center; padding-top: 30px;">업로드된 파일 없음</div>';
+                return;
+            }
+            uploadedFiles.forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.className = `file-item ${selectedFileIndex === idx ? 'selected' : ''}`;
+                item.innerHTML = `<span>📂 ${file.name}</span> <span style="font-size:9px; opacity:0.7;">#${idx+1}</span>`;
+                item.onclick = () => {
+                    selectedFileIndex = idx;
+                    renderFileList();
+                    loadSelectedFile(idx);
+                };
+                fileListBox.appendChild(item);
+            });
+        }
+
+        function loadSelectedFile(idx) {
+            const file = uploadedFiles[idx];
+            if (!file) return;
+            const fileURL = URL.createObjectURL(file);
+            videoElement.src = fileURL;
+            videoElement.style.display = 'block';
+            targetBox.style.display = 'none';
+            status.innerText = `Active: ${file.name}`;
+            isVideoLoaded = true;
+
+            videoElement.onloadedmetadata = function () {
+                updateTimeDisplay();
+                renderTimelineClip(file.name, videoElement.duration);
+                renderRuler();
+            };
+        }
+
+        function renderTimelineClip(name, duration) {
+            timelineClipsContainer.innerHTML = '';
+            const clip = document.createElement('div');
+            clip.className = 'timeline-clip';
+            clip.style.left = '0%';
+            clip.style.width = '100%';
+            clip.innerText = `🎬 ${name} (${formatTime(duration)})`;
+            timelineClipsContainer.appendChild(clip);
+        }
+
+        function deleteSelectedFile() {
+            if (selectedFileIndex === null || uploadedFiles.length === 0) {
+                alert('삭제할 파일을 목록에서 먼저 선택해주세요.');
+                return;
+            }
             
-            // 기존 키프레임 마커 DOM 모두 제거
-            document.querySelectorAll('.keyframe-marker').forEach(m => m.remove());
-            updateTimeDisplay();
-            renderRuler();
+            uploadedFiles.splice(selectedFileIndex, 1);
+            
+            if (uploadedFiles.length > 0) {
+                selectedFileIndex = 0;
+                renderFileList();
+                loadSelectedFile(selectedFileIndex);
+            } else {
+                videoElement.pause();
+                videoElement.removeAttribute('src');
+                videoElement.load();
+                videoElement.style.display = 'none';
+                targetBox.style.display = 'flex';
+                fileInput.value = '';
+                status.innerText = '';
+                isVideoLoaded = false;
+                selectedFileIndex = null;
+                timelineClipsContainer.innerHTML = '';
+                keyframes = {};
+                document.querySelectorAll('.keyframe-marker').forEach(m => m.remove());
+                renderFileList();
+                updateTimeDisplay();
+                renderRuler();
+            }
         }
 
         videoElement.addEventListener('timeupdate', () => {

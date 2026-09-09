@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDK Video Editor - Filmora Y2K Retro</title>
+    <title>IDK Video Editor - Real Video & Keyframe Editor</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -13,9 +13,10 @@
             --win-blue: #000080;
             --win-text: #000000;
             --panel-inner: #ececec;
+            --desktop-bg: #008080;
         }
 
-        [data-theme="dark"] {
+        body[data-theme="win95-dark"] {
             --win-bg: #2b2b2b;
             --win-dark: #141414;
             --win-light: #424242;
@@ -23,6 +24,40 @@
             --win-blue: #1a0033;
             --win-text: #ffccff;
             --panel-inner: #1c1c1c;
+            --desktop-bg: #0b0610;
+        }
+
+        body[data-theme="y2k-pink"] {
+            --win-bg: #fff0f5;
+            --win-dark: #ffb6c1;
+            --win-light: #ffffff;
+            --win-darker: #d81b60;
+            --win-blue: #c2185b;
+            --win-text: #4a1525;
+            --panel-inner: #ffe4e1;
+            --desktop-bg: #fce4ec;
+        }
+
+        body[data-theme="matrix-green"] {
+            --win-bg: #0d1117;
+            --win-dark: #21262d;
+            --win-light: #30363d;
+            --win-darker: #000000;
+            --win-blue: #238636;
+            --win-text: #56d364;
+            --panel-inner: #161b22;
+            --desktop-bg: #010409;
+        }
+
+        body[data-theme="retro-orange"] {
+            --win-bg: #2d231e;
+            --win-dark: #1a1411;
+            --win-light: #4a3b32;
+            --win-darker: #0d0a08;
+            --win-blue: #d97706;
+            --win-text: #fde68a;
+            --panel-inner: #1f1815;
+            --desktop-bg: #1c1410;
         }
 
         * { box-sizing: border-box; }
@@ -30,16 +65,66 @@
             margin: 0;
             padding: 4px;
             font-family: 'MS Sans Serif', 'Microsoft Sans Serif', 'Courier New', monospace;
-            background-color: var(--win-bg);
+            background-color: var(--desktop-bg);
             color: var(--win-text);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: background 0.3s, color 0.3s;
         }
 
-        /* 윈도우 창 공통 스타일 */
+        .top-menu-bar {
+            height: 35px;
+            background-color: var(--win-bg);
+            border: 2px solid;
+            border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            font-size: 11px;
+            flex-shrink: 0;
+            margin-bottom: 4px;
+        }
+        .menu-items {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button, select, input[type="file"] {
+            background-color: var(--win-bg);
+            color: var(--win-text);
+            border-top: 2px solid var(--win-light);
+            border-left: 2px solid var(--win-light);
+            border-right: 2px solid var(--win-darker);
+            border-bottom: 2px solid var(--win-darker);
+            padding: 3px 6px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        button:active {
+            border-top: 2px solid var(--win-darker);
+            border-left: 2px solid var(--win-darker);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+        }
+
+        /* 메인 워크스페이스 그리드 (자유로운 크기 조절 지원) */
+        .main-workspace {
+            display: grid;
+            grid-template-columns: var(--col-1, 260px) 4px 1fr 4px var(--col-3, 270px);
+            grid-template-rows: 1fr 4px var(--row-2, 160px);
+            flex-grow: 1;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        .resizer-col-1 { grid-column: 2; grid-row: 1 / span 3; cursor: ew-resize; background: var(--win-dark); }
+        .resizer-col-3 { grid-column: 4; grid-row: 1 / span 3; cursor: ew-resize; background: var(--win-dark); }
+        .resizer-row-2 { grid-column: 1 / span 5; grid-row: 2; cursor: ns-resize; background: var(--win-dark); }
+
         .window {
             background-color: var(--win-bg);
             border-top: 2px solid var(--win-light);
@@ -48,11 +133,12 @@
             border-bottom: 2px solid var(--win-darker);
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            overflow: hidden;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
         }
 
         .title-bar {
-            background: linear-gradient(90deg, var(--win-blue), #1084d0);
+            background: linear-gradient(90deg, var(--win-blue), var(--win-darker));
             color: white;
             padding: 3px 6px;
             font-weight: bold;
@@ -60,6 +146,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            user-select: none;
         }
 
         .title-bar-controls button {
@@ -85,115 +172,44 @@
             border-bottom: 2px solid var(--win-light);
             padding: 6px;
             overflow: auto;
+            flex-grow: 1;
         }
 
-        /* 필모라 스타일 상단 메뉴바 */
-        .top-menu-bar {
-            height: 35px;
-            background-color: var(--win-bg);
-            border-bottom: 2px solid var(--win-dark);
+        .panel-library { grid-column: 1; grid-row: 1; }
+        .panel-preview { grid-column: 3; grid-row: 1; display: flex; flex-direction: column; }
+        .panel-inspector { grid-column: 5; grid-row: 1 / span 3; }
+        .panel-timeline { grid-column: 1 / span 3; grid-row: 3; display: flex; flex-direction: column; }
+
+        /* 비디오 및 프리뷰 영역 */
+        .preview-container {
+            width: 100%;
+            flex-grow: 1;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 8px;
-            font-size: 11px;
-            flex-shrink: 0;
-        }
-        .menu-items {
-            display: flex;
-            gap: 12px;
-        }
-        .menu-btn {
-            background: none;
-            border: none;
-            color: var(--win-text);
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 11px;
-            padding: 2px 5px;
-        }
-        .menu-btn:hover {
-            background-color: var(--win-blue);
-            color: white;
-        }
-
-        /* 메인 레이아웃 구조 (필모라 배치) */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 240px 1fr 260px;
-            grid-template-rows: 1fr 140px;
-            flex-grow: 1;
-            gap: 4px;
-            margin-top: 4px;
+            justify-content: center;
+            background-color: #000;
+            position: relative;
             overflow: hidden;
         }
 
-        /* 1. 미디어/소스 라이브러리 (좌측 상단) */
-        .panel-library {
-            grid-column: 1;
-            grid-row: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        #videoElement, #targetBox {
+            max-width: 100%;
+            max-height: 100%;
+            position: absolute;
+            object-fit: contain;
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out;
         }
 
-        /* 2. 미리보기 창 (중앙 상단) */
-        .panel-preview {
-            grid-column: 2;
-            grid-row: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
         #targetBox {
-            width: 110px;
-            height: 110px;
-            background: linear-gradient(135deg, var(--win-blue), #ff00ff);
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, var(--win-blue), var(--win-darker));
             border: 2px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             color: #fff;
-            transition: transform 0.3s, opacity 0.3s;
-        }
-
-        /* 3. 인스펙터 / 속성 패널 (우측) */
-        .panel-inspector {
-            grid-column: 3;
-            grid-row: 1 / span 2;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        /* 4. 타임라인 영역 (하단) */
-        .panel-timeline {
-            grid-column: 1 / span 2;
-            grid-row: 2;
-            display: flex;
-            flex-direction: column;
-        }
-
-        button, input[type="file"] {
-            background-color: var(--win-bg);
-            color: var(--win-text);
-            border-top: 2px solid var(--win-light);
-            border-left: 2px solid var(--win-light);
-            border-right: 2px solid var(--win-darker);
-            border-bottom: 2px solid var(--win-darker);
-            padding: 4px 8px;
-            font-family: inherit;
-            font-size: 11px;
-            cursor: pointer;
-        }
-        button:active {
-            border-top: 2px solid var(--win-darker);
-            border-left: 2px solid var(--win-darker);
-            border-right: 2px solid var(--win-light);
-            border-bottom: 2px solid var(--win-light);
         }
 
         .control-group {
@@ -207,21 +223,57 @@
         .control-group input[type="range"] {
             width: 100%;
         }
+
+        /* 타임라인 키프레임 트랙 스타일 */
+        .timeline-track-area {
+            position: relative;
+            width: 100%;
+            height: 35px;
+            background-color: var(--win-darker);
+            border: 1px solid var(--win-light);
+            margin-top: 4px;
+            cursor: pointer;
+        }
+        .keyframe-marker {
+            position: absolute;
+            top: 2px;
+            width: 10px;
+            height: 31px;
+            background-color: #ff00ff;
+            border: 1px solid white;
+            transform: translateX(-50%);
+            cursor: grab;
+        }
+        .keyframe-marker::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 3px;
+            width: 2px; height: 100%;
+            background: white;
+        }
     </style>
 </head>
-<body data-theme="dark">
+<body data-theme="win95-dark" id="mainBody">
 
-    <!-- 상단 메뉴바 (필모라 스타일 배치) -->
+    <!-- 상단 메뉴바 -->
     <div class="top-menu-bar">
         <div class="menu-items">
             <span style="font-weight: bold; color: var(--win-blue);">IDK-EDITSITE</span>
-            <button class="menu-btn" onclick="toggleTheme()">테마전환</button>
-            <button class="menu-btn" onclick="saveProjectToDevice()">프로젝트저장</button>
+            <label style="font-size:11px;">테마:</label>
+            <select id="themeSelector" onchange="changeTheme(this.value)">
+                <option value="win95-dark">클래식 윈도우 다크</option>
+                <option value="y2k-pink">Y2K 핑크 고딕</option>
+                <option value="matrix-green">매트릭스 힙합</option>
+                <option value="retro-orange">레트로 오렌지</option>
+            </select>
+            <button onclick="resetLayout()">창 크기/위치 초기화</button>
+            <button onclick="saveProjectToDevice()">프로젝트 저장</button>
         </div>
-        <div>미디어 편집기 v1.0</div>
+        <div style="font-size: 10px;">Full Editor v2.5</div>
     </div>
 
-    <div class="main-layout">
+    <!-- 메인 워크스페이스 -->
+    <div class="main-workspace" id="workspace">
 
         <!-- 1. 미디어 라이브러리 패널 -->
         <div class="window panel-library">
@@ -229,24 +281,35 @@
                 <span>Media Source</span>
                 <div class="title-bar-controls"><button>-</button><button>X</button></div>
             </div>
-            <div class="sunken-panel" style="flex-grow: 1;">
+            <div class="sunken-panel">
                 <label style="font-weight: bold; font-size: 11px;">비디오 파일 업로드</label>
                 <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 6px;">
-                <div id="status" style="font-size: 10px; margin-top: 6px; color: var(--win-text);"></div>
+                <div id="status" style="font-size: 10px; margin-top: 6px;"></div>
             </div>
         </div>
 
+        <div class="resizer-col-1" id="resizer1"></div>
+
         <!-- 2. 프리뷰 패널 -->
         <div class="window panel-preview">
-            <div class="title-bar" style="width: 100%;">
+            <div class="title-bar">
                 <span>Preview Window</span>
                 <div class="title-bar-controls"><button>-</button><button>X</button></div>
             </div>
-            <div class="sunken-panel" style="width: 100%; flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div id="targetBox">PREVIEW</div>
-                <div style="font-size: 10px; margin-top: 10px;">00:00 / 00:10 (Keyframe Track)</div>
+            <div class="sunken-panel" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0;">
+                <div class="preview-container" id="previewContainer">
+                    <video id="videoElement" style="display:none;"></video>
+                    <div id="targetBox">PREVIEW</div>
+                </div>
+                <!-- 재생 컨트롤 바 -->
+                <div style="width: 100%; background: var(--win-bg); padding: 4px; display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--win-dark);">
+                    <button id="playBtn" onclick="togglePlay()" style="font-weight: bold;">▶ 재생</button>
+                    <span id="timeDisplay" style="font-size: 10px;">00:00 / 00:00</span>
+                </div>
             </div>
         </div>
+
+        <div class="resizer-col-3" id="resizer2"></div>
 
         <!-- 3. 인스펙터 속성 조절 패널 -->
         <div class="window panel-inspector">
@@ -254,32 +317,38 @@
                 <span>Keyframe Properties</span>
                 <div class="title-bar-controls"><button>-</button><button>X</button></div>
             </div>
-            <div class="sunken-panel" style="flex-grow: 1;">
+            <div class="sunken-panel">
                 <div class="control-group">
-                    <label>X Position</label>
-                    <input type="range" id="rangeX" min="-90" max="90" value="0" oninput="updateAnimation()">
+                    <label>X Position (<span id="valX">0</span>px)</label>
+                    <input type="range" id="rangeX" min="-150" max="150" value="0" oninput="updateKeyframeProperty()">
                 </div>
                 <div class="control-group">
-                    <label>Scale</label>
-                    <input type="range" id="rangeScale" min="0.5" max="1.5" step="0.1" value="1" oninput="updateAnimation()">
+                    <label>Scale (<span id="valScale">1.0</span>)</label>
+                    <input type="range" id="rangeScale" min="0.2" max="2.0" step="0.1" value="1" oninput="updateKeyframeProperty()">
                 </div>
                 <div class="control-group">
-                    <label>Opacity</label>
-                    <input type="range" id="rangeOpacity" min="0.2" max="1" step="0.1" value="1" oninput="updateAnimation()">
+                    <label>Opacity (<span id="valOpacity">1.0</span>)</label>
+                    <input type="range" id="rangeOpacity" min="0.1" max="1.0" step="0.1" value="1" oninput="updateKeyframeProperty()">
                 </div>
-                <button onclick="playAutoAnimation()" style="width: 100%; margin-top: 10px;">애니메이션 테스트</button>
+                <button onclick="addKeyframe()" style="width: 100%; margin-top: 6px; background-color: var(--win-blue); color: white; font-weight: bold;">+ 현재 위치에 키프레임 추가</button>
+                <button onclick="playAutoAnimation()" style="width: 100%; margin-top: 6px;">미리보기 테스트 재생</button>
             </div>
         </div>
+
+        <div class="resizer-row-2" id="resizer3"></div>
 
         <!-- 4. 타임라인 패널 -->
         <div class="window panel-timeline">
             <div class="title-bar">
-                <span>Timeline Track</span>
+                <span>Timeline & Keyframe Track</span>
                 <div class="title-bar-controls"><button>-</button><button>X</button></div>
             </div>
-            <div class="sunken-panel" style="flex-grow: 1; display: flex; align-items: center;">
-                <div style="width: 100%; height: 26px; background-color: var(--win-blue); display: flex; align-items: center; padding-left: 8px; font-size: 10px; color: white; border: 1px solid white;">
-                    Video Clip #1 (Track 1)
+            <div class="sunken-panel" style="display: flex; flex-direction: column; justify-content: center;">
+                <div style="font-size: 10px; margin-bottom: 2px;">타임라인을 클릭하여 재생 위치를 조절하고 키프레임을 심으세요:</div>
+                <div class="timeline-track-area" id="timelineTrack" onclick="seekTimeline(event)">
+                    <div id="clipBar" style="position: absolute; left: 0; top: 2px; width: 100%; height: 31px; background-color: var(--win-blue); opacity: 0.4; display: flex; align-items: center; padding-left: 6px; font-size: 10px; color: white;">
+                        Video Clip #1
+                    </div>
                 </div>
             </div>
         </div>
@@ -287,57 +356,198 @@
     </div>
 
     <script>
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute("data-theme");
-            body.setAttribute("data-theme", currentTheme === "dark" ? "light" : "dark");
+        // 테마 관리
+        function changeTheme(themeName) {
+            document.getElementById('mainBody').setAttribute('data-theme', themeName);
+            localStorage.setItem('idk_theme', themeName);
         }
 
-        const fileInput = document.getElementById('videoFile');
-        const status = document.getElementById('status');
-
-        fileInput.addEventListener('change', function() {
-            if (fileInput.files.length > 0) {
-                status.innerText = `Loaded: ${fileInput.files[0].name}`;
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('idk_theme');
+            if(savedTheme) {
+                document.getElementById('mainBody').setAttribute('data-theme', savedTheme);
+                document.getElementById('themeSelector').value = savedTheme;
             }
         });
 
-        function updateAnimation() {
+        // 워크스페이스 리사이징 구현
+        const workspace = document.getElementById('workspace');
+        const resizer1 = document.getElementById('resizer1');
+        const resizer2 = document.getElementById('resizer2');
+        const resizer3 = document.getElementById('resizer3');
+        let isResizing = null;
+
+        resizer1.addEventListener('mousedown', (e) => { isResizing = 'col1'; e.preventDefault(); });
+        resizer2.addEventListener('mousedown', (e) => { isResizing = 'col3'; e.preventDefault(); });
+        resizer3.addEventListener('mousedown', (e) => { isResizing = 'row2'; e.preventDefault(); });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const rect = workspace.getBoundingClientRect();
+            if (isResizing === 'col1') {
+                let w = e.clientX - rect.left;
+                if (w > 180 && w < 500) workspace.style.setProperty('--col-1', w + 'px');
+            } else if (isResizing === 'col3') {
+                let w = rect.right - e.clientX;
+                if (w > 200 && w < 500) workspace.style.setProperty('--col-3', w + 'px');
+            } else if (isResizing === 'row2') {
+                let h = rect.bottom - e.clientY;
+                if (h > 100 && h < 350) workspace.style.setProperty('--row-2', h + 'px');
+            }
+        });
+
+        window.addEventListener('mouseup', () => { isResizing = null; });
+
+        function resetLayout() {
+            workspace.style.setProperty('--col-1', '260px');
+            workspace.style.setProperty('--col-3', '270px');
+            workspace.style.setProperty('--row-2', '160px');
+        }
+
+        // 비디오 업로드 및 재생 기능
+        const fileInput = document.getElementById('videoFile');
+        const videoElement = document.getElementById('videoElement');
+        const targetBox = document.getElementById('targetBox');
+        const status = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+
+        let isVideoLoaded = false;
+        let keyframes = {}; // 시간별 키프레임 데이터 저장
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const fileURL = URL.createObjectURL(file);
+                videoElement.src = fileURL;
+                videoElement.style.display = 'block';
+                targetBox.style.display = 'none'; // 실제 영상으로 대체
+                status.innerText = `Loaded: ${file.name}`;
+                isVideoLoaded = true;
+                
+                videoElement.onloadedmetadata = function() {
+                    updateTimeDisplay();
+                };
+            }
+        });
+
+        videoElement.addEventListener('timeupdate', () => {
+            updateTimeDisplay();
+            applyCurrentKeyframe();
+        });
+
+        function updateTimeDisplay() {
+            const current = formatTime(videoElement.currentTime || 0);
+            const duration = formatTime(videoElement.duration || 10);
+            timeDisplay.innerText = `${current} / ${duration}`;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        function togglePlay() {
+            if (!isVideoLoaded) {
+                // 비디오 없을 땐 박스 애니메이션 테스트 구동
+                playAutoAnimation();
+                return;
+            }
+            if (videoElement.paused) {
+                videoElement.play();
+                playBtn.innerText = "❚❚ 일시정지";
+            } else {
+                videoElement.pause();
+                playBtn.innerText = "▶ 재생";
+            }
+        }
+
+        // 타임라인 클릭 이동
+        function seekTimeline(event) {
+            const track = document.getElementById('timelineTrack');
+            const rect = track.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const percentage = clickX / rect.width;
+
+            if (isVideoLoaded && videoElement.duration) {
+                videoElement.currentTime = percentage * videoElement.duration;
+            }
+        }
+
+        // 키프레임 시스템
+        function updateKeyframeProperty() {
             const x = document.getElementById('rangeX').value;
             const scale = document.getElementById('rangeScale').value;
             const opacity = document.getElementById('rangeOpacity').value;
-            const box = document.getElementById('targetBox');
 
-            box.style.transform = `translateX(${x}px) scale(${scale})`;
-            box.style.opacity = opacity;
+            document.getElementById('valX').innerText = x;
+            document.getElementById('valScale').innerText = scale;
+            document.getElementById('valOpacity').innerText = opacity;
+
+            const target = isVideoLoaded ? videoElement : targetBox;
+            target.style.transform = `translate(${x}px, 0px) scale(${scale})`;
+            target.style.opacity = opacity;
+        }
+
+        function addKeyframe() {
+            const currentTime = isVideoLoaded ? videoElement.currentTime : 0;
+            const x = document.getElementById('rangeX').value;
+            const scale = document.getElementById('rangeScale').value;
+            const opacity = document.getElementById('rangeOpacity').value;
+
+            // 키프레임 객체에 저장
+            keyframes[currentTime.toFixed(1)] = { x, scale, opacity };
+
+            // 타임라인 UI에 마커 표시
+            const track = document.getElementById('timelineTrack');
+            const duration = isVideoLoaded ? videoElement.duration : 10;
+            const percent = (currentTime / duration) * 100;
+
+            const marker = document.createElement('div');
+            marker.className = 'keyframe-marker';
+            marker.style.left = `${percent}%`;
+            track.appendChild(marker);
+
+            alert(`시간 ${formatTime(currentTime)} 위치에 키프레임이 등록되었습니다!`);
+        }
+
+        function applyCurrentKeyframe() {
+            // 현재 시간에 등록된 키프레임이 있다면 자동 반영
+            const currentTime = videoElement.currentTime.toFixed(1);
+            if (keyframes[currentTime]) {
+                const kf = keyframes[currentTime];
+                document.getElementById('rangeX').value = kf.x;
+                document.getElementById('rangeScale').value = kf.scale;
+                document.getElementById('rangeOpacity').value = kf.opacity;
+                updateKeyframeProperty();
+            }
         }
 
         function playAutoAnimation() {
-            const box = document.getElementById('targetBox');
-            box.style.transform = `translateX(50px) scale(1.3)`;
-            box.style.opacity = 0.5;
-            document.getElementById('rangeX').value = 50;
+            const target = isVideoLoaded ? videoElement : targetBox;
+            target.style.transform = `translateX(80px) scale(1.3)`;
+            target.style.opacity = 0.5;
+            document.getElementById('rangeX').value = 80;
             document.getElementById('rangeScale').value = 1.3;
             document.getElementById('rangeOpacity').value = 0.5;
+            updateKeyframeProperty();
 
             setTimeout(() => {
-                box.style.transform = `translateX(0px) scale(1)`;
-                box.style.opacity = 1;
+                target.style.transform = `translateX(0px) scale(1)`;
+                target.style.opacity = 1;
                 document.getElementById('rangeX').value = 0;
                 document.getElementById('rangeScale').value = 1;
                 document.getElementById('rangeOpacity').value = 1;
-            }, 800);
+                updateKeyframeProperty();
+            }, 1000);
         }
 
         function saveProjectToDevice() {
             const projectData = {
                 site: "IDK Editsite",
                 theme: document.body.getAttribute("data-theme"),
-                settings: {
-                    x: document.getElementById('rangeX').value,
-                    scale: document.getElementById('rangeScale').value,
-                    opacity: document.getElementById('rangeOpacity').value
-                },
+                keyframes: keyframes,
                 savedAt: new Date().toISOString()
             };
 

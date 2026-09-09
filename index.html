@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간편 동영상 편집기 & 애니메이션</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            margin-top: 15px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        /* 애니메이션이 적용될 상자 스타일 */
+        #targetBox {
+            width: 100px;
+            height: 100px;
+            background-color: #ff6b6b;
+            margin: 20px auto;
+            border-radius: 12px;
+            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+        }
+        .action-btn {
+            background-color: #339af0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1번 영역: 동영상 파일 업로드 -->
+    <div class="container">
+        <h2>동영상 편집 업로드</h2>
+        <p>편집할 동영상을 선택해 주세요 (구형 폰 배려 가벼운 모드)</p>
+        
+        <input type="file" id="videoFile" accept="video/*">
+        <br>
+        <button class="action-btn" onclick="uploadVideo()">서버로 보내기</button>
+        
+        <p id="status" style="margin-top: 20px; color: blue;"></p>
+    </div>
+
+    <!-- 2번 영역: 키프레임 애니메이션 미리보기 -->
+    <div class="container">
+        <h2>키프레임 애니메이션 테스트</h2>
+        <p>상자가 움직이는 효과를 미리 확인해 보세요.</p>
+
+        <div id="targetBox"></div>
+
+        <button class="action-btn" onclick="playAnimation()">애니메이션 재생</button>
+    </div>
+
+    <script>
+        // [기능 1] 동영상 전송 함수 (나중에 Render 서버 주소와 연결)
+        function uploadVideo() {
+            const fileInput = document.getElementById('videoFile');
+            const status = document.getElementById('status');
+
+            if (fileInput.files.length === 0) {
+                alert("먼저 동영상 파일을 선택해 주세요!");
+                return;
+            }
+
+            status.innerText = "영상을 서버로 전송 중입니다... 잠시만 기다려주세요!";
+            
+            // 나중에 Render 서버 통신 코드가 들어갈 자리입니다.
+        }
+
+        // [기능 2] 키프레임 애니메이션 실행 함수
+        const keyframes = {
+            start: { x: 0, scale: 1, opacity: 1 },      // 시작 상태
+            end: { x: 150, scale: 1.4, opacity: 0.6 }    // 1초 뒤 변화된 상태
+        };
+
+        function playAnimation() {
+            const box = document.getElementById('targetBox');
+
+            // 시작 위치로 초기화
+            box.style.transform = `translateX(0px) scale(${keyframes.start.scale})`;
+            box.style.opacity = keyframes.start.opacity;
+
+            // 약간의 딜레이 후 목표 위치로 이동 (애니메이션 발생)
+            setTimeout(() => {
+                box.style.transform = `translateX(${keyframes.end.x}px) scale(${keyframes.end.scale})`;
+                box.style.opacity = keyframes.end.opacity;
+            }, 50);
+        }
+    </script>
+
+</body>
+</html>

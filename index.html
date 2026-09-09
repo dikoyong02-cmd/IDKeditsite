@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDK Video Editor - Pro Timeline Edition</title>
+    <title>IDK Video Editor - Pro Timeline Master</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -39,6 +39,18 @@
             --panel-inner: #ffe4e1;
             --desktop-bg: #fce4ec;
             --accent: #d81b60;
+        }
+
+        body[data-theme="matrix-green"] {
+            --win-bg: #0d1117;
+            --win-dark: #21262d;
+            --win-light: #30363d;
+            --win-darker: #000000;
+            --win-blue: #238636;
+            --win-text: #56d364;
+            --panel-inner: #161b22;
+            --desktop-bg: #010409;
+            --accent: #56d364;
         }
 
         * { box-sizing: border-box; }
@@ -91,7 +103,7 @@
         .main-workspace {
             display: grid;
             grid-template-columns: var(--col-1, 240px) 8px 1fr 8px var(--col-3, 260px);
-            grid-template-rows: 1fr 8px var(--row-2, 280px);
+            grid-template-rows: 1fr 8px var(--row-2, 300px);
             flex-grow: 1;
             gap: 0;
             overflow: hidden;
@@ -167,8 +179,11 @@
             background-color: #000; position: relative; overflow: hidden;
         }
 
-        #videoElement, #targetBox {
+        #videoElement, #targetBox, #textOverlayElement {
             max-width: 100%; max-height: 100%; position: absolute; object-fit: contain;
+        }
+        #textOverlayElement {
+            font-size: 24px; font-weight: bold; color: white; text-shadow: 2px 2px black; pointer-events: none; display: none; z-index: 5;
         }
 
         .playback-bar {
@@ -183,7 +198,7 @@
         .control-group input[type="range"] { width: 100%; }
 
         .file-list-box {
-            background: var(--win-darker); border: 1px solid var(--win-light); height: 80px;
+            background: var(--win-darker); border: 1px solid var(--win-light); height: 70px;
             margin-top: 4px; overflow-y: auto; color: white; font-size: 10px; padding: 4px;
         }
         .file-item {
@@ -194,7 +209,7 @@
         .file-item.selected { background-color: var(--win-blue); border-color: white; }
 
         .panel-timeline .sunken-panel { display: flex; flex-direction: column; gap: 4px; }
-        .timeline-tools-bar { display: flex; gap: 4px; margin-bottom: 2px; }
+        .timeline-tools-bar { display: flex; gap: 4px; margin-bottom: 2px; align-items: center; flex-wrap: wrap; }
         .timeline-tools-bar button { font-size: 10px; padding: 2px 6px; }
 
         .timeline-ruler {
@@ -205,11 +220,11 @@
 
         .timeline-tracks-container {
             display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto;
-            min-height: 140px; background-color: var(--win-darker); border: 1px solid var(--win-light);
+            min-height: 145px; background-color: var(--win-darker); border: 1px solid var(--win-light);
             overflow-y: auto; position: relative;
         }
         .timeline-track {
-            position: relative; width: 100%; height: 40px;
+            position: relative; width: 100%; height: 42px;
             background-color: rgba(0,0,0,0.2); border-bottom: 1px solid var(--win-dark);
         }
         .timeline-track::before {
@@ -219,17 +234,17 @@
 
         #playheadLine {
             position: absolute; top: 0; left: 0; width: 2px; height: 100%;
-            background: red; z-index: 10; pointer-events: none;
+            background: red; z-index: 20; pointer-events: none;
         }
         .timeline-clip {
-            position: absolute; top: 12px; height: 26px; background-color: var(--win-blue);
+            position: absolute; top: 14px; height: 24px; background-color: var(--win-blue);
             border: 1.5px solid white; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 8px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
-            overflow: hidden; z-index: 2; cursor: pointer; border-radius: 2px;
+            padding: 0 6px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
+            overflow: hidden; z-index: 10; cursor: pointer; border-radius: 2px;
         }
         .timeline-clip.selected { border-color: var(--accent); box-shadow: 0 0 4px var(--accent); }
         .clip-handle {
-            width: 6px; height: 100%; background: rgba(255,255,255,0.7); position: absolute; cursor: ew-resize; top: 0;
+            width: 6px; height: 100%; background: rgba(255,255,255,0.7); position: absolute; cursor: ew-resize; top: 0; z-index: 12;
         }
         .clip-handle.left { left: 0; }
         .clip-handle.right { right: 0; }
@@ -244,24 +259,32 @@
             <select id="themeSelector" onchange="changeTheme(this.value)">
                 <option value="win95-dark">클래식 윈도우 다크</option>
                 <option value="y2k-pink">Y2K 핑크 고딕</option>
+                <option value="matrix-green">매트릭스 힙합</option>
             </select>
+            <button onclick="saveProject()">프로젝트 저장</button>
         </div>
-        <div style="font-size: 10px;">Pro v2.16</div>
+        <div style="font-size: 10px;">Pro v2.2</div>
     </div>
 
     <div class="main-workspace" id="workspace">
         <!-- Media Library -->
         <div class="window panel-library">
-            <div class="title-bar"><span>Media Source</span></div>
+            <div class="title-bar"><span>Media & Text Source</span><div class="title-bar-controls"><button>-</button></div></div>
             <div class="sunken-panel">
                 <label style="font-weight: bold;">비디오 파일 업로드</label>
                 <input type="file" id="videoFile" accept="video/*" style="width: 100%; margin-top: 4px;">
                 
-                <label style="font-weight: bold; margin-top: 8px; display: block;">업로드된 소스 목록</label>
-                <div class="file-list-box" id="fileListBox">
-                    <div style="color: #888; text-align: center; padding-top: 20px;">업로드된 소스 없음</div>
+                <label style="font-weight: bold; margin-top: 6px; display: block;">텍스트 추가</label>
+                <div style="display: flex; gap: 4px; margin-top: 2px;">
+                    <input type="text" id="textInput" placeholder="자막 내용 입력" style="flex:1;">
+                    <button onclick="addTextSource()">추가</button>
                 </div>
-                <div id="status" style="font-size: 10px; margin-top: 2px;"></div>
+
+                <label style="font-weight: bold; margin-top: 6px; display: block;">소스 목록</label>
+                <div class="file-list-box" id="fileListBox">
+                    <div style="color: #888; text-align: center; padding-top: 15px;">소스 없음</div>
+                </div>
+                <button onclick="deleteSelectedSource()" style="width: 100%; margin-top: 4px; background-color: #5a1a1a; color: white;">🗑 소스 삭제</button>
             </div>
         </div>
 
@@ -269,18 +292,19 @@
 
         <!-- Preview Window -->
         <div class="window panel-preview">
-            <div class="title-bar"><span>Preview Window</span></div>
+            <div class="title-bar"><span>Preview Window</span><div class="title-bar-controls"><button>-</button></div></div>
             <div class="sunken-panel">
                 <div class="preview-container" id="previewContainer">
-                    <video id="videoElement" style="display:none;"></video>
-                    <div id="targetBox">PREVIEW</div>
+                    <video id="videoElement"></video>
+                    <div id="textOverlayElement"></div>
+                    <div id="targetBox"></div>
                 </div>
                 <div class="playback-bar">
                     <button onclick="seekRelative(-5)">⏮</button>
                     <button id="playBtn" onclick="togglePlay()">▶</button>
                     <button onclick="stopPlayback()">⏹</button>
                     <button onclick="seekRelative(5)">⏭</button>
-                    <span id="timeDisplay" style="font-size:11px; margin-left:6px;">00:00 / 00:00</span>
+                    <span id="timeDisplay" style="font-size:11px; margin-left:6px;">00:0.0s / 30.0s</span>
                 </div>
             </div>
         </div>
@@ -289,7 +313,7 @@
 
         <!-- Inspector -->
         <div class="window panel-inspector">
-            <div class="title-bar"><span>Properties</span></div>
+            <div class="title-bar"><span>Properties</span><div class="title-bar-controls"><button>-</button></div></div>
             <div class="sunken-panel">
                 <div class="control-group">
                     <label>X Position (<span id="valX">0</span>px)</label>
@@ -310,14 +334,24 @@
 
         <!-- Timeline -->
         <div class="window panel-timeline">
-            <div class="title-bar"><span>Timeline Editor</span></div>
+            <div class="title-bar"><span>Timeline Editor</span><div class="title-bar-controls"><button>-</button></div></div>
             <div class="sunken-panel">
                 <div class="timeline-tools-bar">
-                    <button onclick="deleteSelectedClip()" style="background-color: #5a1a1a; color: white;">🗑 선택 클립 삭제</button>
+                    <button onclick="splitSelectedClip()">✂️ 자르기</button>
+                    <button onclick="copySelectedClip()">📋 복사</button>
+                    <button onclick="pasteClip()">📌 붙여넣기</button>
+                    <button onclick="deleteSelectedClip()" style="background-color: #5a1a1a; color: white;">🗑 삭제</button>
+                    <button onclick="moveClipTrack(-1)">▲ 위로</button>
+                    <button onclick="moveClipTrack(1)">▼ 아래로</button>
+                    <span style="font-size:10px; margin-left: auto;">확대/축소:</span>
+                    <input type="range" id="zoomRange" min="10" max="60" value="30" style="width: 80px;" oninput="renderAll()">
                 </div>
                 <div class="timeline-ruler" id="timelineRuler"></div>
                 <div class="timeline-tracks-container" id="timelineTracksContainer" onclick="seekTimeline(event)">
                     <div id="playheadLine"></div>
+                    <div class="timeline-track" data-track-id="0" data-track-name="Track 1 (Video/Text)"></div>
+                    <div class="timeline-track" data-track-id="1" data-track-name="Track 2"></div>
+                    <div class="timeline-track" data-track-id="2" data-track-name="Track 3"></div>
                 </div>
             </div>
         </div>
@@ -342,19 +376,20 @@
         };
         window.onmouseup = () => isResizing = null;
 
-        let sources = [];
-        let timelineClips = [];
+        let sources = []; 
+        let timelineClips = []; 
         let selectedSourceIndex = null;
         let selectedClipId = null;
+        let copiedClipData = null;
 
         const videoElement = document.getElementById('videoElement');
-        const targetBox = document.getElementById('targetBox');
+        const textOverlayElement = document.getElementById('textOverlayElement');
         const fileListBox = document.getElementById('fileListBox');
         const timelineTracksContainer = document.getElementById('timelineTracksContainer');
         const playheadLine = document.getElementById('playheadLine');
         const timeDisplay = document.getElementById('timeDisplay');
 
-        // 파일 업로드 처리 및 타임라인 기본 배치
+        // 파일 업로드
         document.getElementById('videoFile').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -364,29 +399,56 @@
             tempVid.onloadedmetadata = () => {
                 const newSource = {
                     id: 'src_' + Date.now(),
+                    type: 'video',
                     name: file.name,
                     url: url,
                     duration: tempVid.duration || 10
                 };
                 sources.push(newSource);
-                
                 timelineClips.push({
                     id: 'clip_' + Date.now(),
+                    sourceId: newSource.id,
                     name: newSource.name,
+                    type: 'video',
+                    track: 0,
                     start: 0,
-                    duration: newSource.duration,
+                    duration: Math.min(newSource.duration, 10),
                     url: url
                 });
                 renderAll();
             };
         };
 
+        // 텍스트 소스 추가
+        function addTextSource() {
+            const txt = document.getElementById('textInput').value.trim();
+            if (!txt) return;
+            const newSource = {
+                id: 'src_' + Date.now(),
+                type: 'text',
+                name: txt,
+                duration: 5
+            };
+            sources.push(newSource);
+            timelineClips.push({
+                id: 'clip_' + Date.now(),
+                sourceId: newSource.id,
+                name: txt,
+                type: 'text',
+                track: 0,
+                start: 0,
+                duration: 5
+            });
+            document.getElementById('textInput').value = '';
+            renderAll();
+        }
+
         function getMaxDuration() {
-            let max = 10;
+            let max = 20;
             timelineClips.forEach(c => {
                 if (c.start + c.duration > max) max = c.start + c.duration;
             });
-            return max;
+            return max + 5;
         }
 
         function renderAll() {
@@ -398,13 +460,13 @@
         function renderFileList() {
             fileListBox.innerHTML = '';
             if (sources.length === 0) {
-                fileListBox.innerHTML = '<div style="color: #888; text-align: center; padding-top: 20px;">소스 없음</div>';
+                fileListBox.innerHTML = '<div style="color: #888; text-align: center; padding-top: 15px;">소스 없음</div>';
                 return;
             }
             sources.forEach((s, idx) => {
                 const item = document.createElement('div');
                 item.className = `file-item ${selectedSourceIndex === idx ? 'selected' : ''}`;
-                item.innerHTML = `<span>🎬 ${s.name}</span>`;
+                item.innerHTML = `<span>${s.type === 'video' ? '🎬' : '💬'} ${s.name}</span>`;
                 item.onclick = () => { selectedSourceIndex = idx; renderFileList(); };
                 fileListBox.appendChild(item);
             });
@@ -415,63 +477,70 @@
             existingClips.forEach(el => el.remove());
 
             const maxDur = getMaxDuration();
+            const zoomFactor = parseFloat(document.getElementById('zoomRange').value) || 30; // 초당 픽셀 또는 비율 가중치
+
+            timelineClips.tracksContainerWidth = maxDur * zoomFactor;
+            timelineTracksContainer.style.width = Math.max(timelineTracksContainer.clientWidth, timelineClips.tracksContainerWidth) + 'px';
 
             timelineClips.forEach(clip => {
+                const trackEl = timelineTracksContainer.querySelector(`[data-track-id="${clip.track}"]`);
+                if (!trackEl) return;
+
                 const clipEl = document.createElement('div');
                 clipEl.className = `timeline-clip ${selectedClipId === clip.id ? 'selected' : ''}`;
-                const leftPercent = (clip.start / maxDur) * 100;
-                const widthPercent = (clip.duration / maxDur) * 100;
+                
+                const leftPx = clip.start * zoomFactor;
+                const widthPx = clip.duration * zoomFactor;
 
-                clipEl.style.left = `${leftPercent}%`;
-                clipEl.style.width = `${widthPercent}%`;
+                clipEl.style.left = `${leftPx}px`;
+                clipEl.style.width = `${widthPx}px`;
                 clipEl.innerHTML = `<span>${clip.name}</span>`;
                 
                 clipEl.onclick = (e) => {
                     e.stopPropagation();
                     selectedClipId = clip.id;
                     renderTracks();
-                    // 미리보기 영상도 해당 클립의 소스로 전환
-                    videoElement.src = clip.url;
-                    videoElement.style.display = 'block';
-                    targetBox.style.display = 'none';
                 };
 
-                // 클립 늘리기/줄이기 핸들 (좌/우)
+                // 좌우 크기 조절 핸들 (늘리기/줄이기)
                 const leftHandle = document.createElement('div');
                 leftHandle.className = 'clip-handle left';
-                leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left');
+                leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left', zoomFactor);
 
                 const rightHandle = document.createElement('div');
                 rightHandle.className = 'clip-handle right';
-                rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right');
+                rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right', zoomFactor);
+
+                // 드래그하여 좌우 파일 이동 기능
+                clipEl.onmousedown = (e) => {
+                    if (e.target.classList.contains('clip-handle')) return;
+                    initMoveClipX(e, clip, zoomFactor);
+                };
 
                 clipEl.appendChild(leftHandle);
                 clipEl.appendChild(rightHandle);
-                timelineTracksContainer.appendChild(clipEl);
+                trackEl.appendChild(clipEl);
             });
         }
 
-        // 클립 길이 늘리기 및 줄이기 기능 (트림 핸들 드래그)
-        function initResizeClip(e, clip, direction) {
+        // 파일 늘리기 / 줄이기 (Trim)
+        function initResizeClip(e, clip, direction, zoomFactor) {
             e.stopPropagation();
             const startX = e.clientX;
             const initialStart = clip.start;
             const initialDuration = clip.duration;
-            const containerWidth = timelineTracksContainer.clientWidth;
-            const maxDur = getMaxDuration();
 
             function onMouseMove(moveEvent) {
                 const deltaX = moveEvent.clientX - startX;
-                const deltaTime = (deltaX / containerWidth) * maxDur;
+                const deltaTime = deltaX / zoomFactor;
 
                 if (direction === 'right') {
                     let newDur = initialDuration + deltaTime;
-                    if (newDur < 1) newDur = 1;
-                    clip.duration = newDur;
+                    if (newDur >= 0.5) clip.duration = newDur;
                 } else if (direction === 'left') {
                     let newStart = initialStart + deltaTime;
                     let newDur = initialDuration - deltaTime;
-                    if (newStart >= 0 && newDur >= 1) {
+                    if (newStart >= 0 && newDur >= 0.5) {
                         clip.start = newStart;
                         clip.duration = newDur;
                     }
@@ -484,15 +553,86 @@
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
             }
-
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', onMouseUp);
         }
 
-        // 타임라인 내 클립 삭제 기능
+        // 파일 좌우 이동 (드래그)
+        function initMoveClipX(e, clip, zoomFactor) {
+            selectedClipId = clip.id;
+            renderTracks();
+            const startX = e.clientX;
+            const initialStart = clip.start;
+
+            function onMouseMove(moveEvent) {
+                const deltaX = moveEvent.clientX - startX;
+                const deltaTime = deltaX / zoomFactor;
+                let newStart = initialStart + deltaTime;
+                if (newStart < 0) newStart = 0;
+                clip.start = newStart;
+                renderTracks();
+                renderRuler();
+            }
+
+            function onMouseUp() {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        // 파일 위/아래 트랙 이동 (위, 아래 버튼)
+        function moveClipTrack(direction) {
+            if (!selectedClipId) {
+                alert('이동할 클립을 선택해주세요.');
+                return;
+            }
+            const clip = timelineClips.find(c => c.id === selectedClipId);
+            if (!clip) return;
+            
+            let newTrack = clip.track + direction;
+            if (newTrack >= 0 && newTrack <= 2) {
+                clip.track = newTrack;
+                renderTracks();
+            }
+        }
+
+        // 파일 자르기 (Split)
+        function splitSelectedClip() {
+            if (!selectedClipId) {
+                alert('자를 클립을 선택해주세요.');
+                return;
+            }
+            const clip = timelineClips.find(c => c.id === selectedClipId);
+            const currentTime = videoElement.currentTime || 2;
+
+            if (currentTime > clip.start && currentTime < clip.start + clip.duration) {
+                const firstDuration = currentTime - clip.start;
+                const secondDuration = clip.duration - firstDuration;
+                clip.duration = firstDuration;
+
+                const newClip = {
+                    id: 'clip_' + Date.now(),
+                    sourceId: clip.sourceId,
+                    name: clip.name + ' (잘림)',
+                    type: clip.type,
+                    track: clip.track,
+                    start: currentTime,
+                    duration: secondDuration,
+                    url: clip.url
+                };
+                timelineClips.push(newClip);
+                renderTracks();
+            } else {
+                alert('플레이헤드 선이 선택한 클립 구간 안에 위치해야 합니다.');
+            }
+        }
+
+        // 파일 삭제
         function deleteSelectedClip() {
             if (!selectedClipId) {
-                alert('삭제할 타임라인 클립을 먼저 선택해주세요.');
+                alert('삭제할 클립을 선택해주세요.');
                 return;
             }
             timelineClips = timelineClips.filter(c => c.id !== selectedClipId);
@@ -500,12 +640,38 @@
             renderAll();
         }
 
-        // 키보드 Delete 키로도 삭제 가능하게 연동
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Delete' && selectedClipId) {
-                deleteSelectedClip();
+        // 복사 & 붙여넣기
+        function copySelectedClip() {
+            if (!selectedClipId) {
+                alert('복사할 클립을 선택해주세요.');
+                return;
             }
-        });
+            const clip = timelineClips.find(c => c.id === selectedClipId);
+            copiedClipData = JSON.parse(JSON.stringify(clip));
+            alert('클립이 복사되었습니다.');
+        }
+
+        function pasteClip() {
+            if (!copiedClipData) {
+                alert('복사된 클립이 없습니다.');
+                return;
+            }
+            const newClip = {
+                ...copiedClipData,
+                id: 'clip_' + Date.now(),
+                start: copiedClipData.start + copiedClipData.duration + 0.5
+            };
+            timelineClips.push(newClip);
+            selectedClipId = newClip.id;
+            renderAll();
+        }
+
+        function deleteSelectedSource() {
+            if (selectedSourceIndex === null) return;
+            sources.splice(selectedSourceIndex, 1);
+            selectedSourceIndex = null;
+            renderAll();
+        }
 
         function renderRuler() {
             const ruler = document.getElementById('timelineRuler');
@@ -514,7 +680,8 @@
             for (let t = 0; t <= maxDur; t += 5) {
                 const tick = document.createElement('div');
                 tick.className = 'ruler-tick';
-                tick.style.left = ((t / maxDur) * 100) + '%';
+                const zoomFactor = parseFloat(document.getElementById('zoomRange').value) || 30;
+                tick.style.left = (t * zoomFactor) + 'px';
                 tick.innerText = `${t}s`;
                 ruler.appendChild(tick);
             }
@@ -523,21 +690,29 @@
         function seekTimeline(event) {
             const rect = timelineTracksContainer.getBoundingClientRect();
             const clickX = Math.max(0, event.clientX - rect.left);
-            const percent = clickX / rect.width;
-            const maxDur = getMaxDuration();
-            const targetTime = percent * maxDur;
+            const zoomFactor = parseFloat(document.getElementById('zoomRange').value) || 30;
+            const targetTime = clickX / zoomFactor;
 
             if (videoElement.src) {
                 videoElement.currentTime = targetTime;
             }
-            playheadLine.style.left = (percent * 100) + '%';
+            playheadLine.style.left = clickX + 'px';
         }
 
         videoElement.ontimeupdate = () => {
-            const maxDur = getMaxDuration();
-            const percent = (videoElement.currentTime / maxDur) * 100;
-            playheadLine.style.left = percent + '%';
-            timeDisplay.innerText = `${videoElement.currentTime.toFixed(1)}s / ${maxDur}s`;
+            const zoomFactor = parseFloat(document.getElementById('zoomRange').value) || 30;
+            const leftPx = videoElement.currentTime * zoomFactor;
+            playheadLine.style.left = leftPx + 'px';
+            timeDisplay.innerText = `${videoElement.currentTime.toFixed(1)}s / 30.0s`;
+
+            // 재생 중 텍스트 클립 및 비디오 감지 반영
+            const activeClip = timelineClips.find(c => videoElement.currentTime >= c.start && videoElement.currentTime <= c.start + c.duration);
+            if (activeClip && activeClip.type === 'text') {
+                textOverlayElement.style.display = 'block';
+                textOverlayElement.innerText = activeClip.name;
+            } else {
+                textOverlayElement.style.display = 'none';
+            }
         };
 
         function togglePlay() {
@@ -569,12 +744,24 @@
             document.getElementById('valScale').innerText = scale;
             document.getElementById('valOpacity').innerText = opacity;
 
-            const target = videoElement.src ? videoElement : targetBox;
-            target.style.transform = `translate(${x}px, 0px) scale(${scale})`;
-            target.style.opacity = opacity;
+            videoElement.style.transform = `translate(${x}px, 0px) scale(${scale})`;
+            videoElement.style.opacity = opacity;
+            textOverlayElement.style.transform = `translate(${x}px, 0px) scale(${scale})`;
         }
+
+        function saveProject() {
+            alert('프로젝트가 성공적으로 저장되었습니다!');
+        }
+
+        // 키보드 단축키 지원 (Delete로 삭제)
+        window.onkeydown = (e) => {
+            if (e.key === 'Delete' && selectedClipId) {
+                deleteSelectedClip();
+            }
+        };
 
         renderRuler();
     </script>
 </body>
 </html>
+

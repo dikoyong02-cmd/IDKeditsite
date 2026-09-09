@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IDK Video Editor - Mobile Touch & Multi-Select</title>
+    <title>IDK Video Editor - Speed & Volume</title>
     <style>
         :root {
             --win-bg: #c0c0c0;
@@ -55,116 +55,59 @@
 
         * { box-sizing: border-box; touch-action: manipulation; }
         body {
-            margin: 0;
-            padding: 4px;
-            font-family: 'MS Sans Serif', 'Microsoft Sans Serif', monospace;
+            margin: 0; padding: 4px;
+            font-family: 'MS Sans Serif', monospace;
             background-color: var(--desktop-bg);
             color: var(--win-text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
         }
 
         .top-menu-bar {
-            height: 35px;
-            background-color: var(--win-bg);
-            border: 2px solid;
-            border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 8px;
-            font-size: 11px;
-            flex-shrink: 0;
-            margin-bottom: 4px;
+            height: 35px; background-color: var(--win-bg);
+            border: 2px solid; border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 8px; font-size: 11px; flex-shrink: 0; margin-bottom: 4px;
         }
         .menu-items { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
         button, select, input[type="file"], input[type="text"] {
-            background-color: var(--win-bg);
-            color: var(--win-text);
-            border-top: 2px solid var(--win-light);
-            border-left: 2px solid var(--win-light);
-            border-right: 2px solid var(--win-darker);
-            border-bottom: 2px solid var(--win-darker);
-            padding: 4px 6px;
-            font-family: inherit;
-            font-size: 11px;
-            cursor: pointer;
-        }
-        button:active {
-            border-top: 2px solid var(--win-darker);
-            border-left: 2px solid var(--win-darker);
-            border-right: 2px solid var(--win-light);
-            border-bottom: 2px solid var(--win-light);
+            background-color: var(--win-bg); color: var(--win-text);
+            border-top: 2px solid var(--win-light); border-left: 2px solid var(--win-light);
+            border-right: 2px solid var(--win-darker); border-bottom: 2px solid var(--win-darker);
+            padding: 4px 6px; font-family: inherit; font-size: 11px; cursor: pointer;
         }
 
         .main-workspace {
             display: grid;
             grid-template-columns: var(--col-1, 240px) 8px 1fr 8px var(--col-3, 260px);
             grid-template-rows: 1fr 8px var(--row-2, 280px);
-            flex-grow: 1;
-            gap: 0;
-            overflow: hidden;
-            min-height: 0;
+            flex-grow: 1; gap: 0; overflow: hidden; min-height: 0;
         }
 
-        .resizer-col-1, .resizer-col-3 {
-            grid-row: 1 / span 3;
-            cursor: ew-resize;
-            background: var(--win-dark);
-        }
+        .resizer-col-1, .resizer-col-3 { grid-row: 1 / span 3; cursor: ew-resize; background: var(--win-dark); }
         .resizer-col-1 { grid-column: 2; }
         .resizer-col-3 { grid-column: 4; }
-        .resizer-row-2 {
-            grid-column: 1 / span 5;
-            grid-row: 2;
-            cursor: ns-resize;
-            background: var(--win-dark);
-        }
+        .resizer-row-2 { grid-column: 1 / span 5; grid-row: 2; cursor: ns-resize; background: var(--win-dark); }
 
         .window {
             background-color: var(--win-bg);
-            border-top: 2px solid var(--win-light);
-            border-left: 2px solid var(--win-light);
-            border-right: 2px solid var(--win-darker);
-            border-bottom: 2px solid var(--win-darker);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-            min-height: 0;
-            min-width: 0;
+            border-top: 2px solid var(--win-light); border-left: 2px solid var(--win-light);
+            border-right: 2px solid var(--win-darker); border-bottom: 2px solid var(--win-darker);
+            display: flex; flex-direction: column; overflow: hidden; box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+            min-height: 0; min-width: 0;
         }
 
         .title-bar {
             background: linear-gradient(90deg, var(--win-blue), var(--win-darker));
-            color: white;
-            padding: 3px 6px;
-            font-weight: bold;
-            font-size: 11px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            flex-shrink: 0;
+            color: white; padding: 3px 6px; font-weight: bold; font-size: 11px;
+            display: flex; justify-content: space-between; align-items: center; user-select: none; flex-shrink: 0;
         }
-
-        .title-bar-controls button {
-            width: 16px; height: 14px; font-size: 9px; line-height: 6px; padding: 0; color: black;
-        }
+        .title-bar-controls button { width: 16px; height: 14px; font-size: 9px; line-height: 6px; padding: 0; color: black; }
 
         .sunken-panel {
             background-color: var(--panel-inner);
-            border-top: 2px solid var(--win-darker);
-            border-left: 2px solid var(--win-darker);
-            border-right: 2px solid var(--win-light);
-            border-bottom: 2px solid var(--win-light);
-            padding: 6px;
-            overflow: auto;
-            flex-grow: 1;
-            min-height: 0;
+            border-top: 2px solid var(--win-darker); border-left: 2px solid var(--win-darker);
+            border-right: 2px solid var(--win-light); border-bottom: 2px solid var(--win-light);
+            padding: 6px; overflow: auto; flex-grow: 1; min-height: 0;
         }
 
         .panel-library { grid-column: 1; grid-row: 1; }
@@ -175,15 +118,13 @@
         .panel-preview .sunken-panel { display: flex; flex-direction: column; padding: 0; }
         .preview-container {
             width: 100%; flex: 1 1 auto; min-height: 0;
-            display: flex; align-items: center; justify-content: center;
-            background-color: #000; position: relative; overflow: hidden;
+            display: flex; align-items: center; justify-content: center; background-color: #000; position: relative; overflow: hidden;
         }
 
-        #videoElement, #targetBox, #textOverlayElement {
-            max-width: 100%; max-height: 100%; position: absolute; object-fit: contain;
-        }
+        #videoElement, #textOverlayElement { max-width: 100%; max-height: 100%; position: absolute; object-fit: contain; }
         #textOverlayElement {
             font-size: 24px; font-weight: bold; color: white; text-shadow: 2px 2px black; pointer-events: none; display: none; z-index: 5;
+            transition: opacity 0.3s ease;
         }
 
         .playback-bar {
@@ -195,7 +136,7 @@
 
         .control-group { margin-bottom: 8px; font-size: 11px; }
         .control-group label { display: block; margin-bottom: 3px; }
-        .control-group input[type="range"] { width: 100%; }
+        .control-group input[type="range"], .control-group select { width: 100%; }
 
         .file-list-box {
             background: var(--win-darker); border: 1px solid var(--win-light); height: 70px;
@@ -205,7 +146,6 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 4px; cursor: pointer; margin-bottom: 2px; border: 1px solid transparent;
         }
-        .file-item:hover { background-color: rgba(255,255,255,0.1); }
         .file-item.selected { background-color: var(--win-blue); border-color: white; }
 
         .panel-timeline .sunken-panel { display: flex; flex-direction: column; gap: 4px; }
@@ -239,12 +179,12 @@
         .timeline-clip {
             position: absolute; top: 14px; height: 24px; background-color: var(--win-blue);
             border: 1.5px solid white; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 6px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
+            padding: 0 8px; font-size: 10px; font-weight: bold; color: white; white-space: nowrap;
             overflow: hidden; z-index: 10; cursor: pointer; border-radius: 2px;
         }
         .timeline-clip.selected { border-color: var(--accent); box-shadow: 0 0 5px var(--accent); background-color: #3b0066; }
         .clip-handle {
-            width: 10px; height: 100%; background: rgba(255,255,255,0.7); position: absolute; cursor: ew-resize; top: 0; z-index: 12;
+            width: 12px; height: 100%; background: rgba(255,255,255,0.8); position: absolute; cursor: ew-resize; top: 0; z-index: 12;
         }
         .clip-handle.left { left: 0; }
         .clip-handle.right { right: 0; }
@@ -263,7 +203,7 @@
             </select>
             <button onclick="saveProject()">저장</button>
         </div>
-        <div style="font-size: 10px;">Touch Pro v2.3</div>
+        <div style="font-size: 10px;">Touch Pro v2.5</div>
     </div>
 
     <div class="main-workspace" id="workspace">
@@ -297,7 +237,6 @@
                 <div class="preview-container" id="previewContainer">
                     <video id="videoElement"></video>
                     <div id="textOverlayElement"></div>
-                    <div id="targetBox"></div>
                 </div>
                 <div class="playback-bar">
                     <button onclick="seekRelative(-5)">⏮</button>
@@ -326,6 +265,23 @@
                 <div class="control-group">
                     <label>Opacity (<span id="valOpacity">1.0</span>)</label>
                     <input type="range" id="rangeOpacity" min="0.1" max="1.0" step="0.1" value="1" oninput="updateProperties()">
+                </div>
+                <div class="control-group" id="speedGroup">
+                    <label>비디오 속도 (<span id="valSpeed">1.0</span>x)</label>
+                    <input type="range" id="rangeSpeed" min="0.5" max="2.0" step="0.1" value="1" oninput="updateProperties()">
+                </div>
+                <div class="control-group" id="volumeGroup">
+                    <label>볼륨 소리 (<span id="valVolume">100</span>%)</label>
+                    <input type="range" id="rangeVolume" min="0" max="100" step="10" value="100" oninput="updateProperties()">
+                </div>
+                <div class="control-group">
+                    <label>애니메이션 효과</label>
+                    <select id="animSelect" onchange="updateProperties()">
+                        <option value="none">없음</option>
+                        <option value="fade-in">페이드 인</option>
+                        <option value="fade-out">페이드 아웃</option>
+                        <option value="fade-in-out">페이드 인/아웃</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -380,9 +336,9 @@
         let sources = []; 
         let timelineClips = []; 
         let selectedSourceIndex = null;
-        let selectedClipIds = []; // 다중 선택을 위해 배열로 관리
+        let selectedClipIds = [];
         let copiedClipData = null;
-        let isMultiSelectMode = false; // 모바일/PC 다중선택 토글 상태
+        let isMultiSelectMode = false;
 
         const videoElement = document.getElementById('videoElement');
         const textOverlayElement = document.getElementById('textOverlayElement');
@@ -398,7 +354,6 @@
             btn.style.background = isMultiSelectMode ? 'var(--win-blue)' : '#333';
         }
 
-        // 파일 업로드
         document.getElementById('videoFile').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -422,7 +377,8 @@
                     track: 0,
                     start: 0,
                     duration: Math.min(newSource.duration, 10),
-                    url: url
+                    url: url,
+                    x: 0, scale: 1, opacity: 1, speed: 1, volume: 100, anim: 'none'
                 });
                 renderAll();
             };
@@ -445,7 +401,8 @@
                 type: 'text',
                 track: 0,
                 start: 0,
-                duration: 5
+                duration: 5,
+                x: 0, scale: 1, opacity: 1, speed: 1, volume: 100, anim: 'none'
             });
             document.getElementById('textInput').value = '';
             renderAll();
@@ -504,10 +461,9 @@
                 clipEl.style.width = `${widthPx}px`;
                 clipEl.innerHTML = `<span>${clip.name}</span>`;
                 
-                // 마우스 및 터치 선택 핸들링 (Ctrl키 또는 다중선택 모드 지원)
                 const handleSelect = (e) => {
                     e.stopPropagation();
-                    if (isMultiSelectMode || e.ctrlKey || e.metajaey) {
+                    if (isMultiSelectMode || e.ctrlKey) {
                         if (isSelected) {
                             selectedClipIds = selectedClipIds.filter(id => id !== clip.id);
                         } else {
@@ -515,6 +471,7 @@
                         }
                     } else {
                         selectedClipIds = [clip.id];
+                        loadClipProperties(clip);
                     }
                     renderTracks();
                 };
@@ -522,7 +479,6 @@
                 clipEl.onclick = handleSelect;
                 clipEl.ontouchend = handleSelect;
 
-                // 좌우 크기 조절 핸들 (터치 겸용)
                 const leftHandle = document.createElement('div');
                 leftHandle.className = 'clip-handle left';
                 leftHandle.onmousedown = (e) => initResizeClip(e, clip, 'left', zoomFactor);
@@ -533,12 +489,11 @@
                 rightHandle.onmousedown = (e) => initResizeClip(e, clip, 'right', zoomFactor);
                 rightHandle.onttouchstart = (e) => initResizeClip(e, clip, 'right', zoomFactor);
 
-                // 드래그 및 터치 이동 기능
                 clipEl.onmousedown = (e) => {
                     if (e.target.classList.contains('clip-handle')) return;
                     initMoveClipX(e, clip, zoomFactor);
                 };
-                clipEl.ontestart = (e) => {
+                clipEl.onttouchstart = (e) => {
                     if (e.target.classList.contains('clip-handle')) return;
                     initMoveClipX(e, clip, zoomFactor);
                 };
@@ -549,7 +504,31 @@
             });
         }
 
-        // 크기 조절 (Trim) - 마우스/터치 통합
+        function loadClipProperties(clip) {
+            document.getElementById('rangeX').value = clip.x || 0;
+            document.getElementById('valX').innerText = clip.x || 0;
+            document.getElementById('rangeScale').value = clip.scale || 1;
+            document.getElementById('valScale').innerText = clip.scale || 1;
+            document.getElementById('rangeOpacity').value = clip.opacity || 1;
+            document.getElementById('valOpacity').innerText = clip.opacity || 1;
+            document.getElementById('rangeSpeed').value = clip.speed || 1;
+            document.getElementById('valSpeed').innerText = clip.speed || 1;
+            document.getElementById('rangeVolume').value = clip.volume !== undefined ? clip.volume : 100;
+            document.getElementById('valVolume').innerText = clip.volume !== undefined ? clip.volume : 100;
+            document.getElementById('animSelect').value = clip.anim || 'none';
+
+            // 텍스트 클립일 경우 속도/볼륨 설정창 숨기기 등 처리 가능
+            const speedGroup = document.getElementById('speedGroup');
+            const volumeGroup = document.getElementById('volumeGroup');
+            if (clip.type === 'text') {
+                speedGroup.style.display = 'none';
+                volumeGroup.style.display = 'none';
+            } else {
+                speedGroup.style.display = 'block';
+                volumeGroup.style.display = 'block';
+            }
+        }
+
         function initResizeClip(e, clip, direction, zoomFactor) {
             e.stopPropagation();
             const clientX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -589,10 +568,10 @@
             window.addEventListener('touchend', onEnd);
         }
 
-        // 파일 이동 (Drag/Touch)
         function initMoveClipX(e, clip, zoomFactor) {
             if (!selectedClipIds.includes(clip.id)) {
                 selectedClipIds = [clip.id];
+                loadClipProperties(clip);
                 renderTracks();
             }
             const clientX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -642,8 +621,7 @@
                 alert('자를 클립을 선택해주세요.');
                 return;
             }
-            const clipId = selectedClipIds[0];
-            const clip = timelineClips.find(c => c.id === clipId);
+            const clip = timelineClips.find(c => c.id === selectedClipIds[0]);
             const currentTime = videoElement.currentTime || 2;
 
             if (currentTime > clip.start && currentTime < clip.start + clip.duration) {
@@ -652,14 +630,11 @@
                 clip.duration = firstDuration;
 
                 const newClip = {
+                    ...JSON.parse(JSON.stringify(clip)),
                     id: 'clip_' + Date.now(),
-                    sourceId: clip.sourceId,
                     name: clip.name + ' (잘림)',
-                    type: clip.type,
-                    track: clip.track,
                     start: currentTime,
-                    duration: secondDuration,
-                    url: clip.url
+                    duration: secondDuration
                 };
                 timelineClips.push(newClip);
                 renderTracks();
@@ -668,7 +643,6 @@
             }
         }
 
-        // 다중 삭제 지원
         function deleteSelectedClips() {
             if (selectedClipIds.length === 0) {
                 alert('삭제할 클립을 선택해주세요.');
@@ -686,7 +660,7 @@
             }
             const clip = timelineClips.find(c => c.id === selectedClipIds[0]);
             copiedClipData = JSON.parse(JSON.stringify(clip));
-            alert('클립이 복사되었습니다.');
+            alert('클립 복사 완료');
         }
 
         function pasteClip() {
@@ -744,13 +718,37 @@
             timeDisplay.innerText = `${videoElement.currentTime.toFixed(1)}s / 30.0s`;
 
             const activeClip = timelineClips.find(c => videoElement.currentTime >= c.start && videoElement.currentTime <= c.start + c.duration);
-            if (activeClip && activeClip.type === 'text') {
-                textOverlayElement.style.display = 'block';
-                textOverlayElement.innerText = activeClip.name;
+            if (activeClip) {
+                if (activeClip.type === 'video') {
+                    videoElement.playbackRate = activeClip.speed || 1;
+                    videoElement.volume = (activeClip.volume !== undefined ? activeClip.volume : 100) / 100;
+                }
+                if (activeClip.type === 'text') {
+                    textOverlayElement.style.display = 'block';
+                    textOverlayElement.innerText = activeClip.name;
+                    applyAnimations(activeClip, videoElement.currentTime);
+                } else {
+                    textOverlayElement.style.display = 'none';
+                }
             } else {
                 textOverlayElement.style.display = 'none';
             }
         };
+
+        function applyAnimations(clip, currTime) {
+            let opacity = clip.opacity || 1;
+            const elapsed = currTime - clip.start;
+            const remaining = (clip.start + clip.duration) - currTime;
+            const anim = clip.anim || 'none';
+
+            if (anim === 'fade-in' || anim === 'fade-in-out') {
+                if (elapsed < 1.0) opacity *= (elapsed / 1.0);
+            }
+            if (anim === 'fade-out' || anim === 'fade-in-out') {
+                if (remaining < 1.0) opacity *= (remaining / 1.0);
+            }
+            textOverlayElement.style.opacity = opacity;
+        }
 
         function togglePlay() {
             if (videoElement.paused && videoElement.src) {
@@ -773,31 +771,37 @@
         }
 
         function updateProperties() {
-            const x = document.getElementById('rangeX').value;
-            const scale = document.getElementById('rangeScale').value;
-            const opacity = document.getElementById('rangeOpacity').value;
+            if (selectedClipIds.length === 0) return;
+            const clipId = selectedClipIds[0];
+            const clip = timelineClips.find(c => c.id === clipId);
+            if (!clip) return;
 
-            document.getElementById('valX').innerText = x;
-            document.getElementById('valScale').innerText = scale;
-            document.getElementById('valOpacity').innerText = opacity;
+            clip.x = document.getElementById('rangeX').value;
+            clip.scale = document.getElementById('rangeScale').value;
+            clip.opacity = document.getElementById('rangeOpacity').value;
+            clip.speed = parseFloat(document.getElementById('rangeSpeed').value);
+            clip.volume = parseInt(document.getElementById('rangeVolume').value);
+            clip.anim = document.getElementById('animSelect').value;
 
-            videoElement.style.transform = `translate(${x}px, 0px) scale(${scale})`;
-            videoElement.style.opacity = opacity;
-            textOverlayElement.style.transform = `translate(${x}px, 0px) scale(${scale})`;
+            document.getElementById('valX').innerText = clip.x;
+            document.getElementById('valScale').innerText = clip.scale;
+            document.getElementById('valOpacity').innerText = clip.opacity;
+            document.getElementById('valSpeed').innerText = clip.speed;
+            document.getElementById('valVolume').innerText = clip.volume;
+
+            videoElement.style.transform = `translate(${clip.x}px, 0px) scale(${clip.scale})`;
+            videoElement.style.opacity = clip.opacity;
+            videoElement.playbackRate = clip.speed;
+            videoElement.volume = clip.volume / 100;
+
+            textOverlayElement.style.transform = `translate(${clip.x}px, 0px) scale(${clip.scale})`;
         }
 
         function saveProject() {
             alert('프로젝트가 저장되었습니다!');
         }
 
-        window.onkeydown = (e) => {
-            if (e.key === 'Delete' && selectedClipIds.length > 0) {
-                deleteSelectedClips();
-            }
-        };
-
         renderRuler();
     </script>
 </body>
 </html>
-
